@@ -28,6 +28,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .btn-outline{background:#fff;color:#333}
 .btn-block{display:block;width:100%;text-align:center;margin-bottom:10px}
 .btn-regen{background:#fff;color:#c00;border-color:#c00}
+.btn-random{background:#fff;color:#007aff;border-color:#007aff;font-size:12px;padding:4px 8px;margin-left:8px;border-radius:4px}
 .panel-title{text-align:center;font-size:18px;font-weight:600;margin:10px 0 18px}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal{background:#fff;border-radius:10px;padding:20px;width:90%;max-width:360px;max-height:80vh;overflow-y:auto}
@@ -41,6 +42,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .start-title{text-align:center;font-size:28px;font-weight:700;margin:60px 0 10px;letter-spacing:2px}
 .start-sub{text-align:center;color:var(--muted);margin-bottom:50px;font-size:14px}
 .buy-btn{padding:4px 12px;border:1px solid #333;background:#fff;border-radius:4px;cursor:pointer;font-size:13px}
+.shop-btn{padding:4px 8px;border:1px solid #4CAF50;background:#fff;color:#4CAF50;border-radius:4px;cursor:pointer;font-size:12px;margin-left:6px}
+.shop-btn:disabled{opacity:0.5;cursor:not-allowed}
+.shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.shop-name{font-weight:500}
+.shop-price{color:#4CAF50;font-weight:600;min-width:60px;text-align:right}
+.shop-desc{color:#666;font-size:12px;margin-top:2px}
+.loading{opacity:0.5;pointer-events:none}
+.form-row-with-random{display:flex;align-items:center;gap:10px}
+.form-row-with-random input,.form-row-with-random select,.form-row-with-random textarea{flex:1}
 </style>
 </head>
 <body>
@@ -51,40 +61,96 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   <button class="btn btn-block" onclick="openSaveModal()">继续任务</button>
   <button class="btn btn-block btn-outline" onclick="showScreen('screen-create')">重新开始</button>
   <button class="btn btn-block btn-outline" onclick="showScreen('screen-settings')">API设置</button>
+  <button class="btn btn-block btn-outline" onclick="showScreen('screen-shop')">系统商店</button>
 </div>
 
 <div id="screen-create" class="screen">
   <div class="panel-title">角色创建</div>
-  <div class="form-row"><label>性别</label><select id="c-gender"><option>男</option><option>女</option><option>其他</option></select></div>
-  <div class="form-row"><label>姓名</label><input id="c-name" type="text" placeholder="主角姓名"></div>
-  <div class="form-row"><label>年龄（≥18）</label><input id="c-age" type="number" min="18" max="60" value="22"></div>
-  <div class="form-row"><label>职业</label><input id="c-job" type="text" placeholder="大学生 / 白领 / 自由职业等"></div>
-  <div class="form-row"><label>外貌</label><textarea id="c-look" placeholder="身高体型、脸型发型、特殊特征..." style="min-height:70px"></textarea></div>
-  <div class="form-row"><label>性格</label><textarea id="c-pers" placeholder="表面冷静内心渴望刺激..." style="min-height:60px"></textarea></div>
-  <div class="form-row"><label>补充信息</label><textarea id="c-extra" placeholder="居住环境、人际关系、癖好等" style="min-height:60px"></textarea></div>
-  <div class="form-row"><label>难度</label>
-    <select id="c-diff"><option value="easy">简单</option><option value="normal" selected>普通</option><option value="hard">困难</option></select>
+  <div class="form-row-with-random">
+    <label>性别</label>
+    <select id="c-gender">
+      <option>男</option>
+      <option>女</option>
+      <option>其他</option>
+    </select>
+    <button class="btn-random" onclick="randomizeGender()">随机</button>
   </div>
-  <div class="form-row"><label>初始地点</label>
+  <div class="form-row-with-random">
+    <label>姓名</label>
+    <input id="c-name" type="text" placeholder="主角姓名">
+    <button class="btn-random" onclick="randomizeName()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>年龄（≥18）</label>
+    <input id="c-age" type="number" min="18" max="60" value="22">
+    <button class="btn-random" onclick="randomizeAge()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>职业</label>
+    <input id="c-job" type="text" placeholder="大学生 / 白领 / 自由职业等">
+    <button class="btn-random" onclick="randomizeJob()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>外貌</label>
+    <textarea id="c-look" placeholder="身高体型、脸型发型、特殊特征..." style="min-height:70px"></textarea>
+    <button class="btn-random" onclick="randomizeAppearance()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>性格</label>
+    <textarea id="c-pers" placeholder="表面冷静内心渴望刺激..." style="min-height:60px"></textarea>
+    <button class="btn-random" onclick="randomizePersonality()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>补充信息</label>
+    <textarea id="c-extra" placeholder="居住环境、人际关系、癖好等" style="min-height:60px"></textarea>
+    <button class="btn-random" onclick="randomizeExtra()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>难度</label>
+    <select id="c-diff">
+      <option value="easy">简单</option>
+      <option value="normal" selected>普通</option>
+      <option value="hard">困难</option>
+    </select>
+    <button class="btn-random" onclick="randomizeDifficulty()">随机</button>
+  </div>
+  <div class="form-row-with-random">
+    <label>初始地点</label>
     <select id="c-loc">
-      <option value="寝室">寝室</option><option value="教室">教室</option><option value="图书馆">图书馆</option>
-      <option value="便利店">便利店</option><option value="公园">公园</option><option value="家中卧室">家中卧室</option>
+      <option value="寝室">寝室</option>
+      <option value="家中卧室">家中卧室</option>
+      <option value="教室">教室</option>
+      <option value="图书馆">图书馆</option>
+      <option value="便利店">便利店</option>
+      <option value="公园">公园</option>
+      <option value="地铁">地铁</option>
+      <option value="商场">商场</option>
+      <option value="电影院">电影院</option>
       <option value="custom">自定义...</option>
     </select>
+    <button class="btn-random" onclick="randomizeLocation()">随机</button>
   </div>
   <div class="form-row hidden" id="custom-loc-row"><label>自定义地点</label><input id="c-loc-custom" type="text" placeholder="例如：公司办公室"></div>
-  <div class="form-row"><label>开场剧情提示（可选）</label><textarea id="c-opening" placeholder="例如：刚洗完澡只穿浴袍，系统突然激活..." style="min-height:60px"></textarea></div>
+  <div class="form-row-with-random">
+    <label>开场剧情提示（可选）</label>
+    <textarea id="c-opening" placeholder="例如：刚洗完澡只穿浴袍，系统突然激活..." style="min-height:60px"></textarea>
+    <button class="btn-random" onclick="randomizeOpening()">随机</button>
+  </div>
   <button class="btn btn-block" onclick="startGame()">激活露出系统</button>
   <button class="btn btn-outline btn-block" onclick="showScreen('screen-start')">返回</button>
 </div>
 
 <div id="screen-main" class="screen">
   <div class="top-bar">
-    <div class="left"><span onclick="backToStart()">返回</span></div>
+    <div class="left">
+      <span onclick="backToStart()">返回</span>
+      <span onclick="openModifyModal()">修改角色</span>
+    </div>
     <div class="right">
       <span onclick="quickSave()">保存</span>
       <span onclick="openSaveModal()">存档</span>
       <span onclick="showScreen('screen-settings')">API设置</span>
+      <span onclick="showScreen('screen-shop')">商店</span>
     </div>
   </div>
   <div class="time-loc">
@@ -107,6 +173,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   <button class="btn btn-block" onclick="saveApi()">保存设置</button>
 </div>
 
+<div id="screen-shop" class="screen">
+  <div class="top-bar"><div class="left"><span onclick="showScreen('screen-main')">返回</span></div></div>
+  <div class="panel-title">系统商店</div>
+  <div style="text-align:center;margin-bottom:16px">
+    <div style="font-size:16px;font-weight:600;color:#333">系统余额: <span id="shop-currency">0</span> 币</div>
+    <div style="font-size:14px;color:#666;margin-top:4px">每日任务可赚取更多系统币</div>
+  </div>
+  <div id="shop-items"></div>
+  <div style="margin-top:20px;padding-top:12px;border-top:1px solid #eee">
+    <div class="panel-title" style="font-size:16px">我的背包</div>
+    <div id="inventory-list" style="color:#666;text-align:center;padding:12px">背包为空</div>
+  </div>
+</div>
+
 <div id="save-modal" class="modal-bg hidden">
   <div class="modal">
     <h3>存档管理</h3>
@@ -116,26 +196,162 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   </div>
 </div>
 
+<div id="modify-modal" class="modal-bg hidden">
+  <div class="modal">
+    <h3>修改角色信息</h3>
+    <div class="form-row"><label>角色名称</label><input id="modify-name" type="text"></div>
+    <div class="form-row"><label>年龄</label><input id="modify-age" type="number" min="18" max="60"></div>
+    <div class="form-row"><label>职业</label><input id="modify-job" type="text"></div>
+    <div class="form-row"><label>外貌</label><textarea id="modify-look" style="min-height:60px"></textarea></div>
+    <div class="form-row"><label>性格</label><textarea id="modify-pers" style="min-height:60px"></textarea></div>
+    <div class="form-row"><label>补充信息</label><textarea id="modify-extra" style="min-height:60px"></textarea></div>
+    <div class="form-row"><label>难度</label>
+      <select id="modify-diff">
+        <option value="easy">简单</option>
+        <option value="normal">普通</option>
+        <option value="hard">困难</option>
+      </select>
+    </div>
+    <div class="form-row"><label>当前地点</label><input id="modify-loc" type="text"></div>
+    <button class="btn btn-block" onclick="saveModify()">保存修改</button>
+    <button class="btn btn-outline btn-block" onclick="closeModifyModal()">取消</button>
+  </div>
+</div>
+
 <script>
 const game = {
   started:false, day:1, timeStr:'', location:'寝室', level:1, exp:0, expMax:100,
   currency:80, cash:0, stamina:100, pee:8, danger:3,
   clothing:'家居服（宽松T恤+短裤）', specialStatus:'无', awareness:'周围暂无明显异常感知',
   difficulty:'normal', char:{}, inventory:[], tasks:{main:null,side:[]}, npcs:[],
-  history:[], lastPlot:'', lastAction:'', openingHint:'', streaming:false
+  history:[], lastPlot:'', lastAction:'', openingHint:'', streaming:false,
+  apiTimeout: 60000, concealment: 70 // 隐蔽度，影响被发现概率
 };
 const MAX_HISTORY = 6;
+
+// 系统商品列表 - 增强版（增加更适合露出的服装和情趣用品）
+const SHOP_ITEMS = [
+  // 基础恢复类
+  {id:1, name:'体力药剂', price:20, desc:'立即恢复30点体力', type:'consumable', effect:{stamina:30}},
+  {id:2, name:'镇定药丸', price:25, desc:'立即降低5点尿意，恢复15点体力', type:'consumable', effect:{pee:-5, stamina:15}},
+  {id:3, name:'经验加速器', price:100, desc:'下个任务经验获取+50%', type:'consumable', effect:{specialStatus:'经验加速器(下次+50%经验)'}},
+  
+  // 暴露专用服装系列
+  {id:11, name:'透明薄纱上衣', price:120, desc:'几乎透明的薄纱材质，乳头清晰地凸现出来，只能遮盖部分轮廓', type:'clothing', effect:{exposureBonus:25, dangerBonus:15, clothing:'透明薄纱上衣（乳头突出可见）'}},
+  {id:12, name:'开裆蕾丝内裤', price:80, desc:'裆部完全敞开设计，穿上后阴唇外露，只需外穿宽松裤子就能达到裸露效果', type:'clothing', effect:{exposureBonus:30, dangerBonus:20, clothing:'开裆蕾丝内裤（私处无遮拦）'}},
+  {id:13, name:'真空紧身裙', price:150, desc:'长度仅到大腿根部，穿上后内裤痕迹明显，弯腰必走光，面料柔软凸显身体曲线', type:'clothing', effect:{exposureBonus:35, dangerBonus:25, clothing:'真空紧身裙（曲线毕露）'}},
+  {id:14, name:'深V露乳上衣', price:130, desc:'领口开至肚脐，完全暴露乳沟，走动时乳房晃动明显，适合夜间外出穿着', type:'clothing', effect:{exposureBonus:28, dangerBonus:22, clothing:'深V露乳上衣（乳房半露）'}},
+  {id:15, name:'系带抹胸', price:60, desc:'只有两条细线在脖子后系着，随时可能脱落，露出整对乳房', type:'clothing', effect:{exposureBonus:32, dangerBonus:28, clothing:'系带抹胸（随时会滑落）'}},
+  
+  // 情趣内衣系列
+  {id:21, name:'黑色蕾丝吊带袜', price:90, desc:'搭配性感内裤的吊带袜组合，突出大腿线条和臀部曲线', type:'clothing', effect:{exposureBonus:22, arousalBonus:20, clothing:'黑色蕾丝吊带袜组合'}},
+  {id:22, name:'乳贴套装', price:40, desc:'只能遮盖乳头，完全暴露乳房，可选择各种花式乳贴', type:'clothing', effect:{exposureBonus:38, dangerBonus:30, clothing:'仅戴乳贴（乳房裸露）'}},
+  {id:23, name:'丁字开裆内裤', price:75, desc:'后面只有细线，前面裆部敞开，穿上后后面能看到臀沟，前面能看到阴唇', type:'clothing', effect:{exposureBonus:40, dangerBonus:32, clothing:'丁字开裆内裤（双面暴露）'}},
+  {id:24, name:'湿身透视装', price:110, desc:'遇水变透明的材质，淋雨后身体线条和肤色完全显露', type:'clothing', effect:{exposureBonus:45, dangerBonus:35, clothing:'湿身透视装（雨后全透）'}},
+  
+  // 暴露用品和装备
+  {id:31, name:'远程遥控跳蛋', price:180, desc:'可远程控制的震动玩具，夹在内裤内侧，可设定随机震动模式增加刺激', type:'tool', effect:{specialStatus:'远程跳蛋（持续刺激）', arousalBonus:40, dangerBonus:25}},
+  {id:32, name:'敏感润滑液', price:55, desc:'涂抹在乳头和阴唇上，增加色情效果和敏感度，泛着水光', type:'tool', effect:{specialStatus:'敏感润滑液(身体泛光)', exposureBonus:15, arousalBonus:25}},
+  {id:33, name:'真空乳夹', price:85, desc:'夹在乳头上使其充血膨胀，更加突出敏感，可选配小铃铛', type:'tool', effect:{specialStatus:'乳夹(乳头充血)', exposureBonus:20, arousalBonus:30}},
+  {id:34, name:'尾部肛塞', price:95, desc:'走路时会摇晃的可爱尾巴，夹在臀缝间异常羞耻', type:'tool', effect:{specialStatus:'动物尾巴(羞耻度up)', exposureBonus:25, arousalBonus:35}},
+  {id:35, name:'隐蔽摄像头', price:200, desc:'微型摄像头，可记录自己暴露的瞬间，获得回放的快感', type:'tool', effect:{specialStatus:'录像中(收集素材)', rewardMultiplier:1.3}},
+  
+  // 辅助道具
+  {id:41, name:'伪装喷雾', price:35, desc:'暂时降低10点危险值，持续3次行动', type:'consumable', effect:{specialStatus:'伪装喷雾(危险-10/3次)'}},
+  {id:42, name:'反光墨镜', price:50, desc:'降低周围人异常感知，持续5次行动', type:'equipment', effect:{specialStatus:'反光墨镜(降低察觉/5次)', awareness:'周围人关注度降低'}},
+  {id:43, name:'便携式隔间', price:120, desc:'可短暂制造私人空间，使用3次', type:'consumable', effect:{specialStatus:'便携式隔间(临时空间/3次)'}},
+  {id:44, name:'紧急逃脱装置', price:200, desc:'危险时刻使用，立即转移到安全地点', type:'consumable', effect:{specialStatus:'紧急逃脱装置(1次)'}},
+  {id:45, name:'透视眼镜', price:150, desc:'查看NPC警觉度，了解周围情况', type:'equipment', effect:{specialStatus:'透视眼镜(看到NPC警觉)', awareness:'能感知NPC注意力'}},
+  
+  // 特殊套装
+  {id:51, name:'羞耻奴隶套装', price:350, desc:'全套束缚装备：项圈、手铐、乳夹、尾巴，完全暴露且无法遮掩', type:'clothing', effect:{exposureBonus:60, dangerBonus:40, arousalBonus:50, clothing:'羞耻奴隶套装(完全暴露状态)'}},
+  {id:52, name:'人妻出轨套装', price:280, desc:'透明睡裙+开裆丝袜+乳贴，模拟出轨人妻的夜行装扮', type:'clothing', effect:{exposureBonus:48, dangerBonus:38, clothing:'人妻出轨套装(夜行透明装)'}},
+  {id:53, name:'户外暴露套装', price:230, desc:'超短风衣+真空内搭+短裤，风衣一敞开就完全暴露', type:'clothing', effect:{exposureBonus:42, dangerBonus:35, clothing:'户外暴露套装(快速暴露)'}},
+  {id:54, name:'学生清纯套装', price:190, desc:'超短裙+透明衬衫，表面清纯实则极易走光', type:'clothing', effect:{exposureBonus:35, dangerBonus:28, clothing:'学生清纯套装(易走光装备)'}}
+];
+
+// 暴露部位描述 - 增强露骨描写
+const EXPOSURE_TYPES = {
+  partial: [
+    '乳房上缘和深深的乳沟，乳头在薄衣下若隐若现',
+    '大腿根部白皙的肌肤，裙下隐约可见的黑色内裤边缘',
+    '腰部裸露的一圈皮肤，肚脐清晰可见，裤腰滑到髋骨',
+    '细肩带滑落的香肩，锁骨和肩胛骨的优美线条',
+    '弯腰时从宽松领口垂下的乳房，晃动明显的乳肉',
+    '湿透紧身裤下清晰的内裤形状和股沟轮廓'
+  ],
+  moderate: [
+    '上半身完全暴露，粉嫩乳头挺立在空气中微微颤抖',
+    '赤裸的下半身，饱满阴唇在空气中绽放，蜜液微润',
+    '整条光裸的大腿，肌肤细腻白皙，内侧敏感地带完全露出',
+    '内衣裤被完全掀起，阴阜和阴毛毫无遮掩地展示',
+    '衣服被强风吹起，乳房在空中剧烈晃动，乳头硬挺',
+    '透明胸罩下充血膨胀的乳头，乳晕颜色清晰可见'
+  ],
+  full: [
+    '全裸站在他人面前，所有私密部位一览无余，耻毛湿乱',
+    '三点全露，乳头硬得像小石子，阴道口微微张开湿润',
+    '张开双腿展示最羞耻的部位，阴唇外翻露出内部嫩肉',
+    '趴在窗前撅起赤裸的臀部，后庭和女性私处完全暴露',
+    '完全湿透后衣服紧贴身体，所有部位轮廓和颜色清晰可见',
+    '被绳子绑住全裸展示，身体每个细节都被他人审视'
+  ]
+};
+
+// 暴露色情词汇库（用于AI生成时增强描写）
+const EXPOSURE_VOCAB = {
+  breasts: ['浑圆饱满的乳房', '挺翘的乳峰', '粉嫩乳头', '深色乳晕', '乳肉晃动', '乳沟深邃', '乳尖硬立'],
+  private: ['湿润的阴唇', '饱满的阴阜', '稀疏的耻毛', '敏感的小豆', '蜜液流淌', '阴道口微张', '私处泛光'],
+  butt: ['浑圆的臀部', '白皙的臀肉', '深深的股沟', '翘臀曲线', '臀瓣分开', '后庭褶皱'],
+  thighs: ['修长的大腿', '大腿根部', '内侧嫩肉', '膝盖内侧', '腿心敏感带'],
+  actions: ['慢慢拉开', '缓缓撩起', '故意掀开', '大胆敞开', '突然脱掉', '假装滑落', '不慎走光'],
+  sensations: ['凉风拂过', '敏感发颤', '蜜液渗出', '肌肤泛红', '酥麻感蔓延', '快感涌动']
+};
+
+// 难度对暴露和被发现的影响配置
+const DIFFICULTY_SETTINGS = {
+  easy: {
+    detectionChanceBase: 0.10,  // 基础被发现概率
+    exposureRequired: 'partial', // 要求暴露程度
+    punishmentMultiplier: 0.5,   // 惩罚系数
+    rewardMultiplier: 0.8        // 奖励系数
+  },
+  normal: {
+    detectionChanceBase: 0.25,
+    exposureRequired: 'moderate',
+    punishmentMultiplier: 1.0,
+    rewardMultiplier: 1.0
+  },
+  hard: {
+    detectionChanceBase: 0.40,
+    exposureRequired: 'full',
+    punishmentMultiplier: 1.5,
+    rewardMultiplier: 1.3
+  }
+};
+
+// 添加状态跟踪变量
+let currentRequestController = null;
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  
+  // 如果是商店页面，更新余额显示
+  if(id === 'screen-shop' && game.started){
+    document.getElementById('shop-currency').textContent = game.currency;
+    renderShopItems();
+    renderInventory();
+  }
 }
+
 function toast(msg, ms=2200){
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), ms);
 }
+
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
@@ -148,12 +364,35 @@ document.getElementById('c-loc').addEventListener('change', function(){
   document.getElementById('custom-loc-row').classList.toggle('hidden', this.value !== 'custom');
 });
 
+// 添加UI状态控制函数
+function setUIEnabled(enabled) {
+  const buttons = document.querySelectorAll('.btn, .choice-item, .top-bar span:not(.loading)');
+  buttons.forEach(btn => {
+    btn.style.opacity = enabled ? '1' : '0.5';
+    btn.style.pointerEvents = enabled ? 'auto' : 'none';
+  });
+  
+  const textareas = document.querySelectorAll('#custom-input');
+  textareas.forEach(ta => {
+    ta.disabled = !enabled;
+    ta.style.opacity = enabled ? '1' : '0.5';
+  });
+  
+  // 如果是禁用状态，取消所有点击事件
+  if (!enabled) {
+    document.body.style.cursor = 'wait';
+  } else {
+    document.body.style.cursor = 'default';
+  }
+}
+
 function loadApi(){
   const s = JSON.parse(localStorage.getItem('exp_api') || '{}');
   document.getElementById('api-base').value = s.base || '';
   document.getElementById('api-key').value = s.key || '';
   document.getElementById('api-model').value = s.model || '';
 }
+
 function saveApi(){
   localStorage.setItem('exp_api', JSON.stringify({
     base: document.getElementById('api-base').value.trim(),
@@ -163,6 +402,7 @@ function saveApi(){
   toast('API设置已保存');
   showScreen(game.started ? 'screen-main' : 'screen-start');
 }
+
 function getApi(){ return JSON.parse(localStorage.getItem('exp_api') || '{}'); }
 
 function getSaveList(){ return JSON.parse(localStorage.getItem('exp_saves') || '[]'); }
@@ -185,7 +425,10 @@ function openSaveModal(){
   }
   document.getElementById('save-modal').classList.remove('hidden');
 }
-function closeSaveModal(){ document.getElementById('save-modal').classList.add('hidden'); }
+
+function closeSaveModal(){ 
+  document.getElementById('save-modal').classList.add('hidden');
+}
 
 function createNewSave(){
   if(!game.started){ toast('请先开始游戏'); return; }
@@ -198,6 +441,7 @@ function createNewSave(){
   toast('存档已保存');
   openSaveModal();
 }
+
 function loadSave(i){
   const list = getSaveList();
   if(!list[i]) return;
@@ -215,6 +459,7 @@ function loadSave(i){
   }
   toast('存档已读取');
 }
+
 function deleteSave(i){
   if(!confirm('确定删除此存档？')) return;
   const list = getSaveList();
@@ -223,6 +468,7 @@ function deleteSave(i){
   openSaveModal();
   toast('已删除');
 }
+
 function quickSave(){
   if(!game.started) return;
   const list = getSaveList();
@@ -233,6 +479,267 @@ function quickSave(){
   setSaveList(list);
 }
 
+// 根据当前地点修正任务名称
+function correctTaskTitle(title, currentLocation) {
+  let correctedTitle = title;
+  
+  // 为不同地点添加更合适的描述
+  if (currentLocation === '寝室') {
+    correctedTitle = correctedTitle
+      .replace(/家里/g, '寝室')
+      .replace(/家中/g, '宿舍')
+      .replace(/房间/g, '寝室');
+  } else if (currentLocation === '家中卧室') {
+    // 保持家庭相关词汇
+    correctedTitle = correctedTitle
+      .replace(/寝室/g, '卧室')
+      .replace(/宿舍/g, '家里');
+  } else if (currentLocation === '教室') {
+    correctedTitle = correctedTitle
+      .replace(/家里/g, '教室')
+      .replace(/寝室/g, '教室')
+      .replace(/房间/g, '课堂');
+  }
+  
+  return correctedTitle;
+}
+
+// 计算被发现概率
+function calculateDetectionChance(exposureLevel, npcAlertness = 0) {
+  const settings = DIFFICULTY_SETTINGS[game.difficulty] || DIFFICULTY_SETTINGS.normal;
+  let baseChance = settings.detectionChanceBase;
+  
+  // 根据暴露程度调整概率
+  if (exposureLevel === 'partial') baseChance *= 0.5;
+  else if (exposureLevel === 'moderate') baseChance *= 1.0;
+  else if (exposureLevel === 'full') baseChance *= 1.8;
+  
+  // NPC警觉度影响
+  baseChance += (npcAlertness * 0.01);
+  
+  // 隐蔽度影响（默认70%会降低被发现概率）
+  const concealmentFactor = (100 - game.concealment) / 100;
+  baseChance *= (1 + concealmentFactor);
+  
+  // 环境因素：不同地点被发现概率不同
+  const locationFactor = {
+    '寝室': 0.7,
+    '家中卧室': 0.6,
+    '教室': 1.0,
+    '图书馆': 1.2,
+    '便利店': 1.3,
+    '公园': 1.0,
+    '地铁': 1.8,
+    '商场': 1.5,
+    '电影院': 0.9
+  }[game.location] || 1.0;
+  
+  baseChance *= locationFactor;
+  
+  // 最终概率限制在合理范围
+  return Math.max(0.01, Math.min(0.95, baseChance));
+}
+
+// 更新余额显示函数
+function updateCurrencyDisplay() {
+  const shopCurrencyEl = document.getElementById('shop-currency');
+  if(shopCurrencyEl && game.started) {
+    shopCurrencyEl.textContent = game.currency;
+  }
+}
+
+// 渲染商店物品
+function renderShopItems() {
+  const container = document.getElementById('shop-items');
+  const items = SHOP_ITEMS.map(item => {
+    const canBuy = game.currency >= item.price;
+    const alreadyOwned = game.inventory.some(inv => inv.id === item.id && !inv.used);
+    const isEquipment = item.type === 'equipment';
+    const isClothing = item.type === 'clothing';
+    
+    // 如果是服装，检查是否已装备类似服装
+    let shouldShowBuy = true;
+    if (isClothing) {
+      const sameTypeOwned = game.inventory.some(inv => {
+        const shopItem = SHOP_ITEMS.find(si => si.id === inv.id);
+        return shopItem && shopItem.type === 'clothing' && !inv.used;
+      });
+      // 允许拥有多件服装，但提示是否要替换
+      shouldShowBuy = true;
+    }
+    
+    return `
+      <div class="shop-row">
+        <div style="flex:1">
+          <div class="shop-name">${item.name}</div>
+          <div class="shop-desc">${item.desc}</div>
+          <div style="font-size:11px;color:#FF4081;margin-top:2px">
+            ${item.effect?.exposureBonus ? `暴露+${item.effect.exposureBonus} ` : ''}
+            ${item.effect?.arousalBonus ? `快感+${item.effect.arousalBonus} ` : ''}
+            ${item.effect?.dangerBonus ? `危险+${item.effect.dangerBonus} ` : ''}
+          </div>
+        </div>
+        <div class="shop-price">${item.price}币</div>
+        <button class="shop-btn" onclick="buyItem(${item.id})" 
+                ${!canBuy ? 'disabled' : ''}>
+          ${canBuy ? (alreadyOwned && isEquipment ? '已拥有' : (alreadyOwned && isClothing ? '再购' : '购买')) : '余额不足'}
+        </button>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = items;
+}
+
+// 渲染背包
+function renderInventory() {
+  const container = document.getElementById('inventory-list');
+  const items = game.inventory.filter(item => !item.used);
+  
+  if (items.length === 0) {
+    container.innerHTML = '<div style="color:#666;text-align:center;padding:12px">背包为空</div>';
+    return;
+  }
+  
+  container.innerHTML = items.map(item => {
+    const shopItem = SHOP_ITEMS.find(si => si.id === item.id);
+    return `
+      <div class="shop-row" style="padding:6px 0;border-bottom:1px solid #eee">
+        <div style="flex:1">
+          <div class="shop-name">${shopItem ? shopItem.name : item.name}</div>
+          <div class="shop-desc">${shopItem ? shopItem.desc : '已购买物品'}</div>
+        </div>
+        ${item.type === 'consumable' ? `<button class="shop-btn" onclick="useItem(${item.id})">使用</button>` : ''}
+        ${item.type === 'clothing' ? `<button class="shop-btn" onclick="equipClothing(${item.id})">穿上</button>` : ''}
+        ${item.type === 'tool' ? `<button class="shop-btn" onclick="useTool(${item.id})">使用</button>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// 购买物品
+function buyItem(itemId) {
+  const item = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!item) return;
+  
+  if (game.currency < item.price) {
+    toast('余额不足');
+    return;
+  }
+  
+  // 不限制购买数量，但服装会有特殊处理
+  game.currency -= item.price;
+  game.inventory.push({
+    id: item.id,
+    name: item.name,
+    type: item.type,
+    used: false,
+    equipped: false
+  });
+  
+  // 如果是服装类型，自动装备
+  if (item.type === 'clothing' && item.effect?.clothing) {
+    game.clothing = item.effect.clothing;
+    toast(`装备了${item.name}！`);
+  }
+  
+  // 如果是情趣用品，添加到特殊状态
+  if (item.type === 'tool' && item.effect?.specialStatus) {
+    game.specialStatus = item.effect.specialStatus;
+  }
+  
+  // 更新显示
+  updateCurrencyDisplay(); // 更新余额显示
+  renderShopItems();
+  renderInventory();
+  toast(`购买了${item.name}！`);
+  quickSave();
+}
+
+// 使用物品
+function useItem(itemId) {
+  const invIndex = game.inventory.findIndex(item => item.id === itemId && !item.used);
+  if (invIndex === -1) return;
+  
+  const shopItem = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!shopItem) return;
+  
+  // 应用效果
+  if (shopItem.effect) {
+    Object.keys(shopItem.effect).forEach(key => {
+      if (key === 'stamina') {
+        game.stamina = Math.min(100, game.stamina + shopItem.effect[key]);
+      } else if (key === 'pee') {
+        game.pee = Math.max(0, game.pee + shopItem.effect[key]);
+      } else if (key === 'level') {
+        game.level += shopItem.effect[key];
+        game.currency += 60;
+        updateCurrencyDisplay(); // 更新余额显示
+        toast(`升级至 Lv.${game.level}！`);
+      } else {
+        game[key] = shopItem.effect[key];
+      }
+    });
+  }
+  
+  // 标记为已使用
+  if (shopItem.type === 'consumable') {
+    game.inventory[invIndex].used = true;
+  }
+  
+  renderInventory();
+  toast(`使用了${shopItem.name}！效果已生效。`);
+  quickSave();
+}
+
+// 装备服装
+function equipClothing(itemId) {
+  const invIndex = game.inventory.findIndex(item => item.id === itemId);
+  if (invIndex === -1) return;
+  
+  const shopItem = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!shopItem || shopItem.type !== 'clothing') return;
+  
+  // 装备这件服装
+  if (shopItem.effect?.clothing) {
+    game.clothing = shopItem.effect.clothing;
+    game.inventory[invIndex].equipped = true;
+    
+    // 如果有暴露加成，应用到游戏中
+    if (shopItem.effect?.exposureBonus) {
+      // 这里可以添加暴露度加成的数值影响
+      toast(`穿上了${shopItem.name}，露出的胆量增加了！`);
+    }
+  }
+  
+  quickSave();
+  showScreen('screen-main');
+}
+
+// 使用情趣用品
+function useTool(itemId) {
+  const invIndex = game.inventory.findIndex(item => item.id === itemId && !item.used);
+  if (invIndex === -1) return;
+  
+  const shopItem = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!shopItem || shopItem.type !== 'tool') return;
+  
+  // 应用工具效果
+  if (shopItem.effect?.specialStatus) {
+    game.specialStatus = shopItem.effect.specialStatus;
+  }
+  
+  if (shopItem.effect?.arousalBonus) {
+    // 快感加成可以影响剧情生成
+    toast(`使用了${shopItem.name}，身体变得更加敏感了！`);
+  }
+  
+  // 工具可以重复使用，不标记为已使用
+  quickSave();
+  showScreen('screen-main');
+}
+
+// 根据主角性别和地点智能生成NPC性别
 function initNpcs(){
   const surnames = ['林','苏','陈','顾','沈','温','叶','夏','白','陆','江','许','贺','傅','裴'];
   const givenM = ['清野','予安','景行','予舟','知许','景深','予白','清和','景明','予怀'];
@@ -241,59 +748,241 @@ function initNpcs(){
   const looksM = ['短发干净利落，戴细框眼镜，气质清冷','身高偏高，笑容温和，穿着整洁','微卷头发，眼神锐利，常穿深色衣服','斯文白净，说话轻声，显得礼貌','运动型身材，皮肤微晒，活力十足'];
   const looksF = ['短发戴细框眼镜，气质清冷','长直发，皮肤白皙，常穿宽松衣服','微卷长发，笑容甜美，妆容淡雅','高马尾，眼神明亮，穿着干练','空气刘海，声音轻柔，气质温柔'];
   const personalities = ['表面冷淡，观察力极强','热情但不越界，喜欢聊天','活泼爱八卦，好奇心重','沉默寡言，但记性很好','温和有礼，容易心软','直率敢言，对反常行为敏感','慢热型，熟悉后会很照顾人'];
+  
   game.npcs = [];
-  for(let i=0; i<3; i++){
-    const gender = Math.random() > 0.45 ? '女' : '男';
+  
+  // 第一个NPC生成逻辑（关键修改点）
+  // 如果是寝室环境，根据主角性别决定室友性别
+  const firstNpcRelation = '舍友'; // 假定第一个是室友
+  
+  // 根据当前地点决定室友生成逻辑
+  let firstNpcGender = '男'; // 默认男性
+  
+  if (game.location === '寝室' || game.location === '宿舍') {
+    // 寝室环境，90%几率生成同性室友
+    if (game.char.gender === '男') {
+      firstNpcGender = '男'; // 男生寝室只产生男性舍友
+    } else if (game.char.gender === '女') {
+      firstNpcGender = '女'; // 女生寝室只产生女性舍友
+    } else {
+      // 其他性别情况，50%几率生成男女
+      firstNpcGender = Math.random() > 0.5 ? '男' : '女';
+    }
+  } else {
+    // 非寝室环境，根据主角性别有一定倾向性
+    if (game.char.gender === '男') {
+      firstNpcGender = Math.random() > 0.3 ? '男' : '女'; // 70%同性，30%异性
+    } else if (game.char.gender === '女') {
+      firstNpcGender = Math.random() > 0.3 ? '女' : '男'; // 70%同性，30%异性
+    } else {
+      firstNpcGender = Math.random() > 0.5 ? '男' : '女';
+    }
+  }
+  
+  // 生成第一个NPC（室友/合租者）
+  game.npcs.push({
+    id: 'n1',
+    name: surnames[Math.floor(Math.random()*surnames.length)] + 
+          (firstNpcGender === '女' ? givenF[Math.floor(Math.random()*givenF.length)] : 
+                                    givenM[Math.floor(Math.random()*givenM.length)]),
+    gender: firstNpcGender, 
+    age: randInt(18, 25),
+    relation: firstNpcRelation,
+    look: firstNpcGender === '女' ? looksF[Math.floor(Math.random()*looksF.length)] : 
+                                   looksM[Math.floor(Math.random()*looksM.length)],
+    personality: personalities[Math.floor(Math.random()*personalities.length)], 
+    alert: 0
+  });
+  
+  // 生成剩余NPC（2-3个）
+  const remainingNpcs = Math.random() > 0.5 ? 2 : 1;
+  
+  for(let i = 0; i < remainingNpcs; i++){
+    const gender = Math.random() > 0.5 ? '女' : '男';
     game.npcs.push({
-      id: 'n'+(i+1),
-      name: rand(surnames) + (gender==='女' ? rand(givenF) : rand(givenM)),
-      gender, age: randInt(20,32),
+      id: 'n'+(i+2),
+      name: rand(surnames) + (gender === '女' ? rand(givenF) : rand(givenM)),
+      gender, 
+      age: randInt(20, 32),
       relation: rand(relations),
-      look: gender==='女' ? rand(looksF) : rand(looksM),
-      personality: rand(personalities), alert: 0
+      look: gender === '女' ? rand(looksF) : rand(looksM),
+      personality: rand(personalities), 
+      alert: 0
     });
   }
+  
+  console.log(`生成${game.npcs.length}个NPC，主角性别：${game.char.gender}，第一个NPC性别：${game.npcs[0].gender}，地点：${game.location}`);
 }
 
+// 完全重写的任务生成系统，专注于暴露裸露身体部位
 function genDailyTasks(){
-  const pools = {
-    easy: [
-      {title:'在家中阳台或窗边短暂露出10-20秒', reward:25, exp:15, punish:'危险值+8，体力-10'},
-      {title:'换衣时故意让窗帘留一条缝隙', reward:30, exp:18, punish:'危险值+10，可能被对面隐约看到'},
-      {title:'在家门口走廊快速露出后立刻返回', reward:35, exp:20, punish:'危险值+12，体力-12'}
-    ],
-    normal: [
-      {title:'去便利店购物时故意不穿内裤', reward:55, exp:30, punish:'危险值+20，若被店员发现异常感知大幅上升'},
-      {title:'在电梯内短暂调整衣物造成走光', reward:65, exp:35, punish:'危险值+22，可能被同乘者察觉'},
-      {title:'公共厕所隔间故意发出细微声响后离开', reward:50, exp:28, punish:'危险值+18'},
-      {title:'穿轻微透光材质衣服在小区内行走10分钟', reward:70, exp:38, punish:'危险值+25'}
-    ],
-    hard: [
-      {title:'在人流不多的街道短暂掀起下装', reward:95, exp:50, punish:'危险值+35，极易触发NPC警觉或意外'},
-      {title:'深夜到楼道尽头露出并拍照存档', reward:110, exp:55, punish:'危险值+40，失败可能触发抽象风险提示'},
-      {title:'在公交/地铁上故意让衣物短暂走光一次', reward:100, exp:52, punish:'危险值+38，周围人异常感知显著提升'}
-    ],
-    extreme: [
-      {title:'在商场试衣间外短暂露出后迅速进入', reward:140, exp:70, punish:'危险值+50，高概率触发严重后果提示'},
-      {title:'完成一次完全无遮挡的公共区域短时露出', reward:160, exp:80, punish:'危险值+55，极可能触发非自愿风险或报警抽象后果'}
-    ]
+  // 根据难度获取配置
+  const difficultyConfig = DIFFICULTY_SETTINGS[game.difficulty] || DIFFICULTY_SETTINGS.normal;
+  const requiredExposure = difficultyConfig.exposureRequired;
+  
+  // 根据难度和地点生成任务
+  const locationBasedTasks = {
+    '寝室': {
+      easy: [
+        {id:1, title:'在阳台门后短暂拉开内裤边缘观察自己3-5秒', reward:30, exp:20, exposure:'partial', risk:15, description:'利用阳台门后的阴影，快速拉开内裤边缘观察自己私密部位'},
+        {id:2, title:'趁室友外出时躺在床上掀起上衣露出胸部5-10秒', reward:35, exp:25, exposure:'moderate', risk:20, description:'确认无人后短暂露出上半身，感受空气中的凉意'},
+        {id:3, title:'洗澡后不关浴室门，用毛巾半遮身体走回床位', reward:40, exp:30, exposure:'moderate', risk:25, description:'利用湿气制造视线模糊，用毛巾巧妙遮挡关键部位'},
+        {id:4, title:'深夜在床上偷偷解开内衣扣，让乳房短暂自由', reward:32, exp:22, exposure:'partial', risk:18, description:'在被子掩护下体验束缚解除的瞬间快感'},
+        {id:5, title:'午休时撩起裙子，露出内裤边缘在通风口凉快', reward:38, exp:28, exposure:'partial', risk:22, description:'利用自然风和阳光的隐秘快感'}
+      ],
+      normal: [
+        {id:6, title:'室友熟睡后站在床边对着月光裸露全身30秒', reward:70, exp:45, exposure:'full', risk:40, description:'月光下的完全裸露，感受夜风轻拂全身皮肤的刺激'},
+        {id:7, title:'穿着开衫内衣在寝室内部走动，有意无意敞开', reward:65, exp:42, exposure:'moderate', risk:35, description:'若隐若现的胸部在走动中自然晃动'},
+        {id:8, title:'在寝室角落对着镜子欣赏自己赤裸的下半身', reward:75, exp:48, exposure:'full', risk:45, description:'用镜子偷窥正常情况下看不到的角度'}
+      ]
+    },
+    '家中卧室': {
+      easy: [
+        {id:101, title:'在家窗边短暂掀起衣角露出肚脐和小腹', reward:35, exp:25, exposure:'partial', risk:18, description:'利用窗帘遮挡，短暂露出腰部以下部位'},
+        {id:102, title:'沙发上躺着时故意让睡裤滑落露出大腿根部', reward:40, exp:28, exposure:'moderate', risk:22, description:'看似无意的走光，实则精心设计'},
+        {id:103, title:'洗澡后只围浴巾在家里走动，任由浴巾滑落肩膀', reward:45, exp:32, exposure:'moderate', risk:25, description:'浴巾的随时会松开的紧张感'}
+      ],
+      normal: [
+        {id:104, title:'在家中对窗完全裸露，用手机定时拍照5秒', reward:80, exp:50, exposure:'full', risk:45, description:'快速完成的自拍挑战，需精确计时'},
+        {id:105, title:'穿着透明丝质睡衣在家人潜在视线内活动', reward:70, exp:45, exposure:'moderate', risk:38, description:'半透明若隐若现的诱惑'}
+      ]
+    },
+    '教室': {
+      easy: [
+        {id:201, title:'教室最后一排悄悄拉开裤链伸手调整内裤', reward:50, exp:35, exposure:'partial', risk:30, description:'利用课桌遮挡，快速调整私密部位'},
+        {id:202, title:'弯腰捡东西时故意让领口大开露出胸部上缘', reward:55, exp:38, exposure:'partial', risk:32, description:'自然的动作中夹杂刻意的暴露'}
+      ],
+      normal: [
+        {id:203, title:'课间在无人教室解开上衣扣子露出手淫10秒', reward:90, exp:60, exposure:'full', risk:55, description:'需要精确的时间把握和环境判断'}
+      ]
+    },
+    '图书馆': {
+      easy: [
+        {id:301, title:'书架间整理书籍时抬高臀部露出内裤边缘', reward:60, exp:40, exposure:'partial', risk:35, description:'利用书架遮挡创造的安全空间'},
+        {id:302, title:'坐在角落偷偷解开文胸扣子感受乳房解放', reward:65, exp:42, exposure:'partial', risk:38, description:'紧张刺激的秘密解放'}
+      ]
+    },
+    '便利店': {
+      easy: [
+        {id:401, title:'冷藏柜前弯腰让低腰裤露出股沟', reward:70, exp:45, exposure:'partial', risk:40, description:'利用商品陈列制造视觉死角'},
+        {id:402, title:'付款时让薄外套滑落露出无内衣的上半身', reward:75, exp:48, exposure:'moderate', risk:45, description:'需要精确控制暴露时间'}
+      ]
+    },
+    '公园': {
+      normal: [
+        {id:501, title:'树林中短暂褪下裤子对着树木小便', reward:85, exp:55, exposure:'full', risk:50, description:'需要快速判断周围环境'},
+        {id:502, title:'长椅上看手机时撩起裙子露出内裤边缘', reward:80, exp:52, exposure:'partial', risk:48, description:'游走在被发现边缘的刺激'}
+      ]
+    },
+    '地铁': {
+      hard: [
+        {id:601, title:'地铁车厢连接处快速拉开裤链暴露性器3秒', reward:120, exp:75, exposure:'full', risk:70, description:'需要极佳的时间和环境判断力'},
+        {id:602, title:'人群中让大衣敞开露出完全赤裸的身体5秒', reward:150, exp:85, exposure:'full', risk:80, description:'高度危险的公开暴露'}
+      ]
+    },
+    '商场': {
+      normal: [
+        {id:701, title:'试衣间故意不关紧门换衣服', reward:95, exp:62, exposure:'moderate', risk:58, description:'需要控制门缝大小和角度'},
+        {id:702, title:'电梯里转身时让裙子完全掀起暴露臀部', reward:100, exp:65, exposure:'full', risk:60, description:'电梯门的开关时间控制'}
+      ]
+    },
+    '电影院': {
+      normal: [
+        {id:801, title:'黑暗影院中偷偷解开伴侣衣服抚摸对方身体', reward:88, exp:58, exposure:'moderate', risk:52, description:'利用黑暗环境的隐蔽性'},
+        {id:802, title:'利用电影高潮音效掩盖衣物摩擦声进行暴露', reward:92, exp:60, exposure:'partial', risk:55, description:'音效时机的精准把握'}
+      ]
+    }
   };
-  const progress = game.day + game.level - 1;
-  let available = ['easy'];
-  if(progress >= 3) available.push('normal');
-  if(progress >= 6) available.push('hard');
-  if(progress >= 10) available.push('extreme');
 
-  game.tasks.main = {...rand(pools[available[available.length-1]]), completed:false};
-  let candidates = [];
-  available.forEach(d => candidates = candidates.concat(pools[d]));
-  candidates = candidates.sort(() => Math.random() - 0.5);
-  const selected = [], used = new Set([game.tasks.main.title]);
-  for(const t of candidates){
-    if(selected.length >= 3) break;
-    if(!used.has(t.title)){ selected.push({...t, completed:false}); used.add(t.title); }
+  // 根据当前地点获取任务池
+  const currentLocationTasks = locationBasedTasks[game.location] || locationBasedTasks['寝室'];
+  
+  // 确保每个难度都有任务可选
+  const allTasks = [];
+  ['easy', 'normal', 'hard'].forEach(diff => {
+    if (currentLocationTasks[diff]) {
+      allTasks.push(...currentLocationTasks[diff]);
+    }
+  });
+  
+  if (allTasks.length === 0) {
+    // 默认生成一些基础任务
+    const defaultTasks = [
+      {id:999, title:'在安全地点尝试局部暴露练习', reward:50, exp:30, exposure:'partial', risk:20, description:'基础暴露训练'},
+      {id:1000, title:'利用环境掩护进行适度暴露', reward:70, exp:40, exposure:'moderate', risk:30, description:'环境利用训练'}
+    ];
+    allTasks.push(...defaultTasks);
   }
+  
+  // 根据玩家等级和进度筛选任务
+  const progress = game.day + game.level - 1;
+  let taskPool = [...allTasks];
+  
+  // 早期只提供简单任务
+  if (progress < 3) {
+    taskPool = taskPool.filter(t => t.exposure === 'partial' || t.risk <= 30);
+  } else if (progress < 6) {
+    // 中期增加中等难度
+    taskPool = taskPool.filter(t => t.risk <= 50);
+  } else if (progress < 10) {
+    // 中后期开放大部分任务
+    taskPool = taskPool.filter(t => t.risk <= 70);
+  }
+  
+  // 确保有足够任务可选
+  if (taskPool.length === 0) {
+    taskPool = allTasks.filter(t => t.exposure === 'partial');
+  }
+  
+  // 随机选择主线任务，并应用难度调整
+  let mainTask = {...rand(taskPool)};
+  
+  // 根据难度调整奖励和风险
+  const config = DIFFICULTY_SETTINGS[game.difficulty] || DIFFICULTY_SETTINGS.normal;
+  mainTask.reward = Math.round(mainTask.reward * config.rewardMultiplier);
+  mainTask.risk = Math.round(mainTask.risk * config.punishmentMultiplier);
+  
+  // 任务状态初始化
+  mainTask.completed = false;
+  mainTask.isMain = true;
+  
+  // 修正任务名称中的地点词汇
+  mainTask.title = correctTaskTitle(mainTask.title, game.location);
+  
+  // 构建支线任务候选池（略低于主线难度）
+  let sideTaskPool = taskPool.filter(t => 
+    t.id !== mainTask.id && 
+    (t.risk <= mainTask.risk * 1.2)
+  );
+  
+  // 随机选择支线任务（1-2个）
+  const sideCount = randInt(1, 2);
+  const selected = [];
+  const usedTitles = new Set([mainTask.title]);
+  
+  for(let i = 0; i < Math.min(sideCount, sideTaskPool.length); i++){
+    const shuffled = [...sideTaskPool].sort(() => Math.random() - 0.5);
+    for(const t of shuffled){
+      const correctedTitle = correctTaskTitle(t.title, game.location);
+      if(!usedTitles.has(correctedTitle)){
+        // 略微调整支线任务参数
+        const sideTask = {...t};
+        sideTask.reward = Math.round(sideTask.reward * 0.7);
+        sideTask.risk = Math.round(sideTask.risk * 0.9);
+        sideTask.completed = false;
+        sideTask.isMain = false;
+        sideTask.title = correctedTitle;
+        selected.push(sideTask);
+        usedTitles.add(correctedTitle);
+        break;
+      }
+    }
+  }
+
+  game.tasks.main = mainTask;
   game.tasks.side = selected;
+  
+  console.log(`第${game.day}天任务已生成：主线1个，支线${selected.length}个，当前地点：${game.location}，难度：${game.difficulty}`);
 }
 
 function updateTime(){
@@ -307,104 +996,227 @@ function updateTime(){
   document.getElementById('loc-str').textContent = game.location;
 }
 
+// 增强系统提示词，更明确任务导向，并增加露骨描写词汇
 function buildSystemPrompt(){
-  return `你是「露出系统」文字游戏的专业剧情生成器。必须严格遵守：
-1. 所有角色均为18岁以上成年人，禁止未成年描写。
-2. 文风色情露骨、细腻小说体，详细描写行为、神态、心理、身体感受、NPC反应与对话。句子必须完整通顺，严禁吞字、漏字、截断。
-3. 非自愿行为仅作抽象风险提示，绝不详细描写非自愿性行为。
-4. 严格承接上一轮所有细节。
-5. 增加剧情分支感、多角色互动（至少两名NPC）、任务提示清晰醒目。
-6. 输出格式必须完整且顺序固定：
-完整小说剧情（900-1600字，句子完整无截断）
+  const difficultyConfig = DIFFICULTY_SETTINGS[game.difficulty] || DIFFICULTY_SETTINGS.normal;
+  const exposureDesc = getExposureDescription(difficultyConfig.exposureRequired);
+  
+  return `你是「露出系统」文字游戏的专业剧情生成器。需要严格遵守以下规则：
+
+核心设定：
+1. 游戏主题是"露出"——故意暴露身体私密部位来获得刺激感和成就感。主角寻求的是在避免严重后果的前提下体验暴露的快感。
+2. 主角的所有行为都是自愿且有意识的露出行为，绝不是意外走光。
+3. 所有角色均为18岁以上成年人，禁止未成年描写。
+
+写作要求：
+1. 文风必须细腻色情小说体，详细描写行为、心理、身体感受、环境氛围、旁观者反应。
+2. 暴露描写必须露骨具体：详细描写乳房（乳头、乳晕、乳肉）、私处（阴唇、阴毛、阴道口）、臀部（臀肉、股沟）、大腿根部等私密部位。
+3. 使用丰富的色情词汇：${Object.values(EXPOSURE_VOCAB).flat().join('、')}
+4. 描写身体反应：乳头硬挺、蜜液渗出、肌肤泛红、酥麻快感等生理变化。
+5. 心理描写：羞耻感、兴奋感、渴望被看见、害怕被发现等复杂情绪。
+
+难度与游戏机制：
+1. 当前难度：${game.difficulty}（暴露要求：${difficultyConfig.exposureRequired}级别，被发现概率：${(difficultyConfig.detectionChanceBase*100).toFixed(0)}%基础值）
+2. 任务完成判定：只有当露出的部位达到${difficultyConfig.exposureRequired}级别才算完成任务
+3. 隐蔽度：主角的隐蔽度为${game.concealment}%，影响NPC发现概率
+4. 特殊装备：主角当前穿着${game.clothing}，如有特殊状态${game.specialStatus}，必须在剧情中体现效果
+
+任务系统：
+1. 主线任务：${game.tasks.main.title} - ${game.tasks.main.description}
+2. 支线任务：${game.tasks.side.map(s => s.title).join('、')}
+
+输出格式必须严格遵循：
+[完整小说剧情]（1000-1800字，必须包含以下元素：
+- 详细的动作描写（如何暴露身体的哪个部位）
+- 身体的色情反应（乳头、私处的变化）
+- 心理的情绪波动（羞耻、兴奋、恐惧）
+- 环境的氛围渲染（光线、声音、周围的人）
+- NPC的可能反应（他们有没有注意到、他们看到了什么）
 ——状态总结——
-等级：Lv.x（经验 x/x）
-系统余额：x　现金：x
-体力：x　尿意：x　危险值：x
-衣物：xxx
-特殊状态：xxx
-异常感知：xxx
-主线任务：xxx（已完成/未完成）
-支线1：xxx（已完成/未完成）
-支线2：xxx（已完成/未完成）
-支线3：xxx（已完成/未完成）
-背包：xxx
-——选项——
-【选项1】具体行动（与其他选项明显不同）
-【选项2】具体行动（与其他选项明显不同）
-【选项3】具体行动（与其他选项明显不同）
-【状态】地点=xxx|衣物=xxx|特殊状态=xxx|异常感知=xxx|体力变化=±n|尿意变化=±n|危险变化=±n|主线完成=是/否|支线完成=1,2或无`;
+等级：Lv.${game.level}（经验 ${game.exp}/${game.expMax}）
+系统余额：${game.currency}币
+现金：${game.cash}元
+体力：${game.stamina}　尿意：${game.pee}　危险值：${game.danger}
+当前装备：${game.clothing}
+特殊状态：${game.specialStatus}
+异常感知：${game.awareness}
+隐蔽度：${game.concealment}%
+主线任务：${game.tasks.main.title}（${game.tasks.main.completed?'已完成':'未完成'}）
+${game.tasks.side.map((s,i) => `支线${i+1}：${s.title}（${s.completed?'已完成':'未完成'}）`).join('\n')}
+背包：${game.inventory.filter(i => !i.used && !i.equipped).map(i => i.name).join('、') || '空'}
+装备：${game.inventory.filter(i => i.equipped).map(i => i.name).join('、') || '无'}
+[选项列表]
+【选项1】具体露骨暴露行动（明确使用性描写词汇）
+【选项2】具体露骨暴露行动（明确使用性描写词汇）
+【选项3】具体露骨暴露行动（明确使用性描写词汇）
+【状态】地点=${game.location}|衣物=${game.clothing}|特殊状态=${game.specialStatus}|异常感知=${game.awareness}|体力变化=±n|尿意变化=±n|危险变化=±n|主线完成=是/否|支线完成=1,2或无|金钱变化=±n|系统币变化=±n|隐蔽度=${game.concealment}%|暴露程度=partial/moderate/full
+
+重要：玩家选择的是露骨暴露行为，不是普通对话或观察。必须围绕"暴露身体私密部位"这一核心展开，描写必须露骨详细！`;
 }
 
 function buildUserPrompt(action){
   const c = game.char;
   const npcStr = game.npcs.map(n => `${n.name}(${n.relation},${n.look},性格${n.personality},警觉${n.alert})`).join('；');
-  const sideStr = game.tasks.side.map((s,i) => `支线${i+1}：${s.title}${s.completed?'(已完成)':'(未完成)'}`).join('；');
-  return `【当前完整状态】
+  const sideStr = game.tasks.side.map((s,i) => `支线${i+1}：${s.title}（风险：${s.risk}）${s.completed?'(已完成)':'(未完成)'}`).join('；');
+  const mainTask = game.tasks.main;
+  
+  // 获取已装备的服装和工具效果
+  const equippedItems = game.inventory.filter(i => i.equipped);
+  const equipmentEffects = equippedItems.map(item => {
+    const shopItem = SHOP_ITEMS.find(si => si.id === item.id);
+    return shopItem ? `${shopItem.name}：${shopItem.desc}` : '';
+  }).filter(Boolean).join('；');
+  
+  // 暴露词汇提示
+  const exposureHint = `可使用以下词汇增强描写：${Object.entries(EXPOSURE_VOCAB).map(([k,v]) => `${k}类：${v.slice(0,3).join('、')}等`).join('；')}`;
+  
+  return `【当前游戏状态】
 主角：${c.name}，${c.gender}，${c.age}岁，职业${c.job}
 外貌：${c.look} 性格：${c.personality} 补充：${c.extra}
-难度：${game.difficulty} 第${game.day}天 ${game.timeStr} 地点：${game.location}
-等级Lv.${game.level} 经验${game.exp}/${game.expMax} 余额${game.currency} 现金${game.cash}
-体力${game.stamina} 尿意${game.pee} 危险${game.danger}
-衣物：${game.clothing} 特殊状态：${game.specialStatus} 异常感知：${game.awareness}
-主线：${game.tasks.main ? game.tasks.main.title+(game.tasks.main.completed?'(已完成)':'(未完成)') : '无'}
+难度：${game.difficulty}（要求${DIFFICULTY_SETTINGS[game.difficulty].exposureRequired}级别暴露） 第${game.day}天 ${game.timeStr} 地点：${game.location}
+等级Lv.${game.level} 经验${game.exp}/${game.expMax} 系统余额${game.currency}币 现金${game.cash}元
+体力${game.stamina} 尿意${game.pee} 危险${game.danger} 隐蔽度：${game.concealment}%
+当前装备：${game.clothing} 特殊状态：${game.specialStatus} 异常感知：${game.awareness}
+主线：${mainTask.title}（风险：${mainTask.risk}） - ${mainTask.description}
 支线：${sideStr}
 NPC：${npcStr}
-背包：${game.inventory.filter(i=>!i.used).map(i=>i.name).join('、')||'空'}
+背包：${game.inventory.filter(i=>!i.used && !i.equipped).map(i=>i.name).join('、')||'空'}
+已装备：${equippedItems.map(i=>i.name).join('、')||'无'}
+${equipmentEffects ? '装备效果：' + equipmentEffects : ''}
+
+${exposureHint}
 
 【玩家本轮行动】${action}
 
-请严格承接信息，生成连贯完整剧情（句子不得截断或吞字），包含多角色互动与清晰任务提示，并按格式输出状态总结 + 三个完全不重复的选项 + 状态行。`;
+请严格遵循系统提示生成细腻、露骨的露出剧情，围绕"暴露身体私密部位"这一核心展开。必须考虑难度对暴露程度的要求（必须达到${DIFFICULTY_SETTINGS[game.difficulty].exposureRequired}级别）。描写要大胆露骨，详细描写身体细节和心理变化！`;
+}
+
+// 获取暴露部位描述的辅助函数
+function getExposureDescription(level) {
+  return rand(EXPOSURE_TYPES[level] || EXPOSURE_TYPES.partial);
 }
 
 async function callStream(system, user){
+  // 取消之前的请求
+  if(currentRequestController){
+    currentRequestController.abort();
+    currentRequestController = null;
+  }
+
   const cfg = getApi();
-  if(!cfg.base || !cfg.key || !cfg.model){ toast('请先配置API'); return null; }
+  if(!cfg.base || !cfg.key || !cfg.model){ 
+    toast('请先配置API'); 
+    return null; 
+  }
+  
   const messages = [{role:'system', content:system}];
   game.history.slice(-MAX_HISTORY).forEach(h => {
     messages.push({role:'user', content:h.user});
     messages.push({role:'assistant', content:h.assistant});
   });
   messages.push({role:'user', content:user});
+  
   try{
+    currentRequestController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      if(currentRequestController){
+        currentRequestController.abort();
+        currentRequestController = null;
+        toast('请求超时（60秒），请重试');
+        setUIEnabled(true);
+      }
+    }, game.apiTimeout);
+
+    // 禁用UI并显示加载状态
+    setUIEnabled(false);
+    
     const res = await fetch(cfg.base.replace(/\/$/,'') + '/chat/completions', {
       method:'POST',
-      headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + cfg.key},
-      body: JSON.stringify({model:cfg.model, stream:true, temperature:0.82, max_tokens:2800, messages})
+      headers:{
+        'Content-Type':'application/json', 
+        'Authorization':'Bearer ' + cfg.key,
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify({
+        model:cfg.model, 
+        stream:true, 
+        temperature:0.9,  // 提高随机性，增强创新
+        top_p:0.95,        // 增加多样性
+        frequency_penalty:0.3, // 适当减少重复
+        presence_penalty:0.3,  // 鼓励新内容
+        max_tokens:4000,   // 增加最大令牌数以容纳详细描写
+        messages
+      }),
+      signal: currentRequestController.signal
     });
-    if(!res.ok){ toast('API错误 ' + res.status); return null; }
+    
+    clearTimeout(timeoutId);
+    
+    if(!res.ok){ 
+      const errorText = await res.text();
+      console.error('API错误:', res.status, errorText);
+      toast('API错误 ' + res.status); 
+      setUIEnabled(true);
+      currentRequestController = null;
+      return null; 
+    }
+    
     return res.body.getReader();
-  }catch(e){ toast('网络连接失败'); return null; }
+  }catch(e){
+    if(e.name === 'AbortError'){
+      console.log('请求被取消');
+    }else{
+      console.error('网络连接失败:', e);
+      toast('网络连接失败，请检查API设置');
+    }
+    setUIEnabled(true);
+    currentRequestController = null;
+    return null;
+  }
 }
 
 async function streamPlot(reader){
   const el = document.getElementById('plot-area');
   el.classList.add('streaming');
-  el.textContent = '';
+  el.textContent = '剧情正在生成中...';
   let full = '';
   let buffer = '';
   const decoder = new TextDecoder();
+  let lastUpdate = Date.now();
+  
   try{
     while(true){
       const {done, value} = await reader.read();
       if(done) break;
+      
       buffer += decoder.decode(value, {stream:true});
       const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // 保留不完整行
+      buffer = lines.pop() || '';
+      
       for(const line of lines){
         if(!line.startsWith('data: ')) continue;
         const data = line.slice(6).trim();
         if(data === '[DONE]') continue;
+        
         try{
           const delta = JSON.parse(data).choices?.[0]?.delta?.content || '';
           if(delta){
             full += delta;
-            // 只过滤状态行，正文完整显示
-            el.textContent = full.replace(/【状态】[^\n]*/g, '').trim();
-            el.scrollTop = el.scrollHeight;
+            
+            // 限制更新频率以提高性能
+            const now = Date.now();
+            if(now - lastUpdate > 100 || full.length < 2000){
+              el.textContent = full.replace(/【状态】[^\n]*/g, '').trim();
+              el.scrollTop = el.scrollHeight;
+              lastUpdate = now;
+            }
           }
-        }catch{}
+        }catch(e){
+          console.warn('解析JSON失败:', e);
+        }
       }
     }
+    
     // 处理最后剩余缓冲
     if(buffer.startsWith('data: ')){
       try{
@@ -413,12 +1225,21 @@ async function streamPlot(reader){
           const delta = JSON.parse(data).choices?.[0]?.delta?.content || '';
           if(delta) full += delta;
         }
-      }catch{}
+      }catch(e){
+        console.warn('处理最后缓冲失败:', e);
+      }
     }
+  } catch(e){
+    console.error('流式读取失败:', e);
+    toast('剧情生成出错');
   } finally {
     el.classList.remove('streaming');
-    el.textContent = full.replace(/【状态】[^\n]*/g, '').trim();
+    const displayText = full.replace(/【状态】[^\n]*/g, '').trim();
+    el.textContent = displayText || '剧情生成失败，请重试';
+    setUIEnabled(true); // 重新启用UI
+    currentRequestController = null;
   }
+  
   return full;
 }
 
@@ -457,20 +1278,53 @@ function parseAndUpdate(full){
       if(k === '体力变化') game.stamina = Math.max(0, Math.min(100, game.stamina + (parseInt(v)||0)));
       if(k === '尿意变化') game.pee = Math.max(0, Math.min(100, game.pee + (parseInt(v)||0)));
       if(k === '危险变化') game.danger = Math.max(0, Math.min(100, game.danger + (parseInt(v)||0)));
+      if(k === '系统币变化' || k === '金钱变化') {
+        const change = parseInt(v) || 0;
+        game.currency = Math.max(0, game.currency + change);
+        // 立即更新商店余额显示
+        updateCurrencyDisplay();
+      }
+      if(k === '隐蔽度') {
+        const newConcealment = parseInt(v.replace('%','')) || game.concealment;
+        game.concealment = Math.max(0, Math.min(100, newConcealment));
+      }
+      if(k === '暴露程度') {
+        // 检查暴露是否达到难度要求
+        const requiredLevel = DIFFICULTY_SETTINGS[game.difficulty].exposureRequired;
+        const achievedLevel = v;
+        const levels = {partial:1, moderate:2, full:3};
+        if(levels[achievedLevel] >= levels[requiredLevel] && game.tasks.main && !game.tasks.main.completed){
+          game.tasks.main.completed = true;
+          const rewardMultiplier = DIFFICULTY_SETTINGS[game.difficulty].rewardMultiplier;
+          const expMultiplier = game.difficulty === 'hard' ? 1.2 : game.difficulty === 'easy' ? 0.9 : 1.0;
+          const actualReward = Math.round(game.tasks.main.reward * rewardMultiplier);
+          const actualExp = Math.round(game.tasks.main.exp * expMultiplier);
+          game.currency += actualReward;
+          game.exp += actualExp;
+          updateCurrencyDisplay();
+          toast(`主线完成！暴露程度${achievedLevel}达成+${actualReward}系统币 +${actualExp}经验`);
+        }
+      }
       if(k === '主线完成' && v === '是' && game.tasks.main && !game.tasks.main.completed){
         game.tasks.main.completed = true;
-        game.currency += game.tasks.main.reward;
-        game.exp += game.tasks.main.exp || 30;
-        toast(`主线完成！+${game.tasks.main.reward}币 +${game.tasks.main.exp||30}经验`);
+        const rewardMultiplier = DIFFICULTY_SETTINGS[game.difficulty].rewardMultiplier;
+        const expMultiplier = game.difficulty === 'hard' ? 1.2 : game.difficulty === 'easy' ? 0.9 : 1.0;
+        const actualReward = Math.round(game.tasks.main.reward * rewardMultiplier);
+        const actualExp = Math.round(game.tasks.main.exp * expMultiplier);
+        game.currency += actualReward;
+        game.exp += actualExp;
+        updateCurrencyDisplay();
+        toast(`主线完成！+${actualReward}系统币 +${actualExp}经验`);
       }
       if(k === '支线完成' && v !== '无'){
         v.split(/[,，]/).forEach(num => {
           const i = parseInt(num) - 1;
           if(game.tasks.side[i] && !game.tasks.side[i].completed){
             game.tasks.side[i].completed = true;
-            game.currency += game.tasks.side[i].reward;
-            game.exp += game.tasks.side[i].exp || 15;
-            toast(`支线${num}完成！+${game.tasks.side[i].reward}币 +${game.tasks.side[i].exp||15}经验`);
+            game.currency += Math.round(game.tasks.side[i].reward * 0.9);
+            game.exp += Math.round(game.tasks.side[i].exp * 0.8);
+            updateCurrencyDisplay();
+            toast(`支线${num}完成！+${Math.round(game.tasks.side[i].reward*0.9)}系统币 +${Math.round(game.tasks.side[i].exp*0.8)}经验`);
           }
         });
       }
@@ -482,20 +1336,28 @@ function parseAndUpdate(full){
     game.day++;
     game.stamina = Math.min(100, game.stamina + 30);
     game.pee = Math.max(0, game.pee - 20);
+    // 隐蔽度恢复
+    game.concealment = Math.min(100, game.concealment + 15);
     genDailyTasks();
-    toast(`第${game.day}天开始！新任务已刷新`);
+    toast(`第${game.day}天开始！新任务已刷新，隐蔽度恢复至${game.concealment}%`);
   }
 
+  // 经验升级
   while(game.exp >= game.expMax){
     game.exp -= game.expMax;
     game.level++;
     game.expMax = 100 + (game.level - 1) * 50;
     game.currency += 60;
-    toast(`升级至 Lv.${game.level}！`);
+    updateCurrencyDisplay();
+    game.concealment = Math.min(100, game.concealment + 10); // 升级增加隐蔽度
+    toast(`升级至 Lv.${game.level}！+60系统币，隐蔽度+10%`);
   }
+  
+  // 状态警告
   if(game.pee >= 85) toast('尿意极高，有失禁风险！');
   if(game.stamina <= 15) toast('体力不支，可能晕厥！');
   if(game.danger >= 70) toast('危险值过高，极易发生意外！');
+  if(game.concealment <= 30) toast('隐蔽度过低，更易被发现！');
 
   game.lastPlot = full.replace(/【状态】[^\n]*/g, '').trim();
   updateTime();
@@ -504,26 +1366,51 @@ function parseAndUpdate(full){
 }
 
 function renderChoices(choices){
-  document.getElementById('choices-area').innerHTML = choices.map((c,i) =>
-    `<div class="choice-item" onclick="doChoice(\`${c.replace(/`/g,'\\`')}\`)">选择${i+1}：${c}</div>`
-  ).join('');
+  if(choices && choices.length > 0){
+    document.getElementById('choices-area').innerHTML = choices.map((c,i) =>
+      `<div class="choice-item" onclick="doChoice(\`${c.replace(/`/g,'\\`')}\`)">选择${i+1}：${c}</div>`
+    ).join('');
+  } else {
+    renderChoicesFromLast();
+  }
 }
+
 function renderChoicesFromLast(){
   document.getElementById('choices-area').innerHTML = `
     <div class="choice-item" onclick="regeneratePlot()">刷新当前剧情</div>
-    <div class="choice-item" onclick="doChoice('继续当前剧情')">继续当前剧情</div>`;
+    <div class="choice-item" onclick="doChoice('继续当前露骨暴露行为')">继续当前露骨暴露行为</div>
+    <div class="choice-item" onclick="doChoice('观察周围环境和NPC的反应')">观察环境与NPC</div>
+    <div class="choice-item" onclick="showScreen('screen-shop')">前往系统商店</div>
+    <div class="choice-item" onclick="doChoice('改变姿势，更大胆地展示私密部位')">改变姿势展示</div>`;
 }
 
+// 添加难度影响开场剧情
 async function generateOpening(){
-  if(game.streaming) return;
+  if(game.streaming) {
+    toast('请等待当前操作完成');
+    return;
+  }
   game.streaming = true;
-  let action = '系统刚刚在主角眼前激活，请生成完整开场剧情：系统说明规则、清晰发布第一天主线与支线任务、主角的第一反应与身体心理描写。要求出现至少两名NPC的互动或存在感。句子必须完整，不得吞字漏字。';
+  
+  const difficultyConfig = DIFFICULTY_SETTINGS[game.difficulty] || DIFFICULTY_SETTINGS.normal;
+  let action = `系统刚刚在主角眼前激活，请生成完整开场剧情：
+系统说明规则，明确告知当前难度为${game.difficulty}，要求暴露程度为${difficultyConfig.exposureRequired}级别。
+清晰发布第一天主线任务：${game.tasks.main.title}（${game.tasks.main.description}）
+主角的第一反应、心理描写、对暴露行为的期待与恐惧。
+详细描写主角的身体特征和外貌。
+要求出现至少两名NPC作为潜在观察者。
+句子必须完整，不得吞字漏字。`;
+  
   if(game.openingHint) action += ' 开场额外提示：' + game.openingHint;
+  
   game.lastAction = action;
   document.getElementById('choices-area').innerHTML = '';
   const user = buildUserPrompt(action);
   const reader = await callStream(buildSystemPrompt(), user);
-  if(!reader){ game.streaming = false; return; }
+  if(!reader){ 
+    game.streaming = false; 
+    return; 
+  }
   const full = await streamPlot(reader);
   const choices = parseAndUpdate(full);
   game.history.push({user, assistant:full});
@@ -533,45 +1420,145 @@ async function generateOpening(){
 }
 
 async function doChoice(action){
-  if(game.streaming) return;
+  if(game.streaming) {
+    toast('请等待当前剧情完成');
+    return;
+  }
+  
   game.streaming = true;
   game.lastAction = action;
-  document.getElementById('choices-area').innerHTML = '';
+  
+  // 清空选择区域
+  document.getElementById('choices-area').innerHTML = '<div class="choice-item">生成剧情中...</div>';
   document.getElementById('custom-input').value = '';
-  game.stamina = Math.max(0, game.stamina - 4 - Math.floor(Math.random()*6));
-  game.pee = Math.min(100, game.pee + 3 + Math.floor(Math.random()*5));
+  
+  // 随机消耗体力，根据动作强度决定
+  let staminaCost = randInt(2, 6);
+  if(action.includes('大胆') || action.includes('完全') || action.includes('赤裸') || action.includes('露骨')) {
+    staminaCost = randInt(5, 12);
+  }
+  game.stamina = Math.max(0, game.stamina - staminaCost);
+  
+  // 尿意自然增加
+  game.pee = Math.min(100, game.pee + randInt(1, 4));
+  
+  // 隐蔽度降低
+  const concealmentLoss = randInt(2, 4);
+  game.concealment = Math.max(0, game.concealment - concealmentLoss);
+  
+  // 检查是否有装备加成
+  const equippedItems = game.inventory.filter(i => i.equipped);
+  let exposureBonus = 0;
+  equippedItems.forEach(item => {
+    const shopItem = SHOP_ITEMS.find(si => si.id === item.id);
+    if(shopItem?.effect?.exposureBonus) {
+      exposureBonus += shopItem.effect.exposureBonus;
+    }
+  });
+  
+  if(exposureBonus > 0) {
+    toast(`装备提供了+${exposureBonus}暴露加成！`);
+  }
+  
   const user = buildUserPrompt(action);
   const reader = await callStream(buildSystemPrompt(), user);
-  if(!reader){ game.streaming = false; return; }
-  const full = await streamPlot(reader);
-  const choices = parseAndUpdate(full);
-  game.history.push({user, assistant:full});
-  if(game.history.length > MAX_HISTORY) game.history.shift();
-  renderChoices(choices);
-  game.streaming = false;
+  
+  if(!reader){ 
+    game.streaming = false; 
+    setUIEnabled(true);
+    return; 
+  }
+  
+  try{
+    const full = await streamPlot(reader);
+    const choices = parseAndUpdate(full);
+    
+    // 添加历史记录
+    game.history.push({user, assistant:full});
+    if(game.history.length > MAX_HISTORY) game.history.shift();
+    
+    // 如果有有效的选择才渲染，否则显示刷新按钮
+    if(choices && choices.length > 0){
+      renderChoices(choices);
+    }else{
+      renderChoicesFromLast();
+    }
+  }catch(e){
+    console.error('生成剧情失败:', e);
+    toast('剧情生成失败，请重试');
+    renderChoicesFromLast();
+  }finally{
+    game.streaming = false;
+  }
 }
 
 function submitCustom(){
   const v = document.getElementById('custom-input').value.trim();
-  if(!v){ toast('请输入内容'); return; }
+  if(!v){ 
+    toast('请输入内容'); 
+    return; 
+  }
+  
+  if(game.streaming){
+    toast('请等待当前剧情完成');
+    return;
+  }
+  
   doChoice(v);
 }
 
 async function regeneratePlot(){
-  if(game.streaming) return;
-  if(!game.lastAction){ await generateOpening(); return; }
+  if(game.streaming) {
+    toast('请等待当前剧情完成');
+    return;
+  }
+  
+  if(!game.lastAction){ 
+    await generateOpening(); 
+    return; 
+  }
+  
   toast('正在刷新剧情...');
   game.streaming = true;
-  document.getElementById('choices-area').innerHTML = '';
-  const user = buildUserPrompt(game.lastAction + '（请重新生成完整剧情，句子完整无吞字漏字，必须输出完整状态总结 + 三个完全不重复的选项）');
+  
+  // 清空选择区域
+  document.getElementById('choices-area').innerHTML = '<div class="choice-item">生成剧情中...</div>';
+  
+  // 轻微消耗体力
+  game.stamina = Math.max(0, game.stamina - randInt(1, 3));
+  
+  const user = buildUserPrompt(game.lastAction + '（请重新生成更加露骨完整的剧情，句子完整无吞字漏字，必须输出完整状态总结 + 三个完全不重复的选项）');
   const reader = await callStream(buildSystemPrompt(), user);
-  if(!reader){ game.streaming = false; return; }
-  const full = await streamPlot(reader);
-  const choices = parseAndUpdate(full);
-  if(game.history.length > 0) game.history[game.history.length-1] = {user, assistant:full};
-  else game.history.push({user, assistant:full});
-  renderChoices(choices);
-  game.streaming = false;
+  
+  if(!reader){ 
+    game.streaming = false; 
+    setUIEnabled(true);
+    return; 
+  }
+  
+  try{
+    const full = await streamPlot(reader);
+    const choices = parseAndUpdate(full);
+    
+    // 更新最后一条历史记录
+    if(game.history.length > 0){
+      game.history[game.history.length-1] = {user, assistant:full};
+    }else{
+      game.history.push({user, assistant:full});
+    }
+    
+    if(choices && choices.length > 0){
+      renderChoices(choices);
+    }else{
+      renderChoicesFromLast();
+    }
+  }catch(e){
+    console.error('刷新剧情失败:', e);
+    toast('刷新失败，请重试');
+    renderChoicesFromLast();
+  }finally{
+    game.streaming = false;
+  }
 }
 
 function startGame(){
@@ -594,10 +1581,13 @@ function startGame(){
   game.openingHint = document.getElementById('c-opening').value.trim();
   game.started = true;
   game.day = 1; game.level = 1; game.exp = 0; game.expMax = 100;
-  game.currency = 80; game.cash = 0; game.stamina = 100; game.pee = 8; game.danger = 3;
+  // 修复：不再硬编码为100，使用游戏对象初始值80
+  game.currency = 80; 
+  game.cash = 0; game.stamina = 100; game.pee = 8; game.danger = 3;
   game.clothing = '家居服（宽松T恤+短裤）';
   game.specialStatus = '无';
   game.awareness = '周围暂无明显异常感知';
+  game.concealment = 70; // 初始隐蔽度
   game.inventory = []; game.history = []; game.lastPlot = ''; game.lastAction = '';
   initNpcs();
   genDailyTasks();
@@ -606,8 +1596,271 @@ function startGame(){
   generateOpening();
 }
 
+// ============================================
+// 新增功能：修改角色信息
+// ============================================
+
+function openModifyModal() {
+  if (!game.started) {
+    toast('请先开始游戏');
+    return;
+  }
+  
+  // 填充当前角色信息到修改模态框
+  document.getElementById('modify-name').value = game.char.name;
+  document.getElementById('modify-age').value = game.char.age;
+  document.getElementById('modify-job').value = game.char.job;
+  document.getElementById('modify-look').value = game.char.look;
+  document.getElementById('modify-pers').value = game.char.personality;
+  document.getElementById('modify-extra').value = game.char.extra;
+  document.getElementById('modify-diff').value = game.difficulty;
+  document.getElementById('modify-loc').value = game.location;
+  
+  document.getElementById('modify-modal').classList.remove('hidden');
+}
+
+function closeModifyModal() {
+  document.getElementById('modify-modal').classList.add('hidden');
+}
+
+function saveModify() {
+  if (!game.started) {
+    toast('请先开始游戏');
+    return;
+  }
+  
+  const newName = document.getElementById('modify-name').value.trim();
+  const newAge = parseInt(document.getElementById('modify-age').value);
+  const newJob = document.getElementById('modify-job').value.trim();
+  const newLook = document.getElementById('modify-look').value.trim();
+  const newPers = document.getElementById('modify-pers').value.trim();
+  const newExtra = document.getElementById('modify-extra').value.trim();
+  const newDiff = document.getElementById('modify-diff').value;
+  const newLoc = document.getElementById('modify-loc').value.trim();
+  
+  if (!newName || isNaN(newAge) || newAge < 18) {
+    toast('请输入有效的角色信息');
+    return;
+  }
+  
+  // 更新角色信息
+  game.char.name = newName;
+  game.char.age = newAge;
+  game.char.job = newJob;
+  game.char.look = newLook;
+  game.char.personality = newPers;
+  game.char.extra = newExtra;
+  game.difficulty = newDiff;
+  game.location = newLoc;
+  
+  // 重新生成NPC和任务
+  initNpcs();
+  genDailyTasks();
+  
+  // 保存到本地存储
+  quickSave();
+  
+  toast('角色信息已更新');
+  closeModifyModal();
+  
+  // 更新游戏界面显示的NPC信息提示
+  setTimeout(() => {
+    const updatedMessage = `角色信息已更新：${newName}（${newAge}岁），职业：${newJob}，当前地点：${newLoc}\n\nNPC和任务已根据新的角色信息重新生成。`;
+    addMessage(updatedMessage, 'system');
+  }, 500);
+}
+
+// ============================================
+// 新增功能：随机生成角色信息
+// ============================================
+
+const namePool = {
+  male: [
+    '李阳', '张伟', '王强', '刘华', '陈明', '赵刚', '周杰', '吴勇', '郑涛', '孙浩',
+    '林轩', '苏墨', '顾辰', '沈逸', '温言', '叶飞', '夏宇', '白洛', '陆峰', '江南'
+  ],
+  female: [
+    '李雪', '张婷', '王丽', '刘静', '陈雨', '赵薇', '周欣', '吴雅', '郑媛', '孙琳',
+    '林婉儿', '苏晴', '顾雪', '沈梦', '温婉', '叶清', '夏雨', '白露', '陆瑶', '江月'
+  ],
+  unisex: [
+    '林风', '苏晨', '陈星', '沈清', '温宁', '叶明', '夏安', '白晨', '陆远', '江枫'
+  ]
+};
+
+const jobs = [
+  '大学生', '研究生', '程序员', '设计师', '教师', '医生', '护士', '销售', '自由职业者',
+  '作家', '摄影师', '艺术家', '咖啡师', '服务员', '公务员', '律师', '工程师', '记者'
+];
+
+const appearances = [
+  '身高170cm，体型匀称，黑色短发，戴细框眼镜，面容清秀',
+  '身高165cm，体型偏瘦，长直发，皮肤白皙，五官精致',
+  '身高178cm，体格健壮，短寸发型，小麦色皮肤，眼睛明亮',
+  '身高160cm，体型娇小，波波头发型，娃娃脸，笑容甜美',
+  '身高175cm，修长身材，中长发微卷，气质清冷',
+  '身高180cm，肌肉线条明显，寸头发型，阳光帅气',
+  '身高162cm，曲线玲珑，大波浪长发，妩媚动人',
+  '身高172cm，瘦高体型，清爽短发，戴无框眼镜，斯文有礼'
+];
+
+const personalities = [
+  '表面冷静内心火热，喜欢探索新鲜事物，对刺激体验有着强烈渴望',
+  '外向开朗，社交能力强，但在特定情境下会变得大胆而开放',
+  '内向敏感，平时拘谨害羞，但在安全环境下会释放真实的自我',
+  '理性与感性并存，善于分析但也会被本能冲动支配',
+  '矛盾型性格，既渴望被人关注又害怕过度曝光',
+  '冒险精神旺盛，喜欢挑战极限，享受肾上腺素飙升的感觉'
+];
+
+const extras = [
+  '独居在市区公寓，养了一只猫，周末喜欢宅在家里看电影',
+  '与室友合租，关系融洽，周末常和朋友们聚会聚餐',
+  '住父母家，有自己的独立卧室，家庭氛围开明和谐',
+  '刚搬新家，还不太熟悉周围环境，正在探索周边',
+  '长期在外地工作，租住在公司附近的单身公寓',
+  '大学生，住在学校宿舍，室友来自不同专业'
+];
+
+const openings = [
+  '刚洗完澡只裹着浴巾走出浴室，系统突然激活在眼前',
+  '夜深人静时独自在房间玩游戏，屏幕上突然弹出系统界面',
+  '周末早晨醒来，发现床前悬浮着淡蓝色的系统窗口',
+  '在镜子前换衣服时，镜面浮现出系统的欢迎信息',
+  '加班到深夜回家，刚脱下外套系统就毫无预兆地启动了'
+];
+
+function randomizeGender() {
+  const options = ['男', '女', '其他'];
+  const randomGender = options[Math.floor(Math.random() * options.length)];
+  document.getElementById('c-gender').value = randomGender;
+  // 联动随机姓名
+  if (document.getElementById('c-name').value.trim() === '') {
+    randomizeName();
+  }
+}
+
+function randomizeName() {
+  const gender = document.getElementById('c-gender').value;
+  const name = getRandomName(gender);
+  document.getElementById('c-name').value = name;
+}
+
+function randomizeAge() {
+  const age = Math.floor(Math.random() * (35 - 18 + 1)) + 18;
+  document.getElementById('c-age').value = age;
+}
+
+function randomizeJob() {
+  const job = jobs[Math.floor(Math.random() * jobs.length)];
+  document.getElementById('c-job').value = job;
+}
+
+function randomizeAppearance() {
+  const appearance = appearances[Math.floor(Math.random() * appearances.length)];
+  document.getElementById('c-look').value = appearance;
+}
+
+function randomizePersonality() {
+  const personality = personalities[Math.floor(Math.random() * personalities.length)];
+  document.getElementById('c-pers').value = personality;
+}
+
+function randomizeExtra() {
+  const extra = extras[Math.floor(Math.random() * extras.length)];
+  document.getElementById('c-extra').value = extra;
+}
+
+function randomizeDifficulty() {
+  const difficulties = ['easy', 'normal', 'hard'];
+  const diff = difficulties[Math.floor(Math.random() * difficulties.length)];
+  document.getElementById('c-diff').value = diff;
+}
+
+function randomizeLocation() {
+  const locations = ['寝室', '家中卧室', '教室', '图书馆', '便利店', '公园', '地铁', '商场', '电影院'];
+  const loc = locations[Math.floor(Math.random() * locations.length)];
+  document.getElementById('c-loc').value = loc;
+  // 如果选择自定义，显示自定义输入框
+  if (loc === 'custom') {
+    document.getElementById('custom-loc-row').classList.remove('hidden');
+    document.getElementById('c-loc-custom').value = '公司办公室';
+  } else {
+    document.getElementById('custom-loc-row').classList.add('hidden');
+  }
+}
+
+function randomizeOpening() {
+  const opening = openings[Math.floor(Math.random() * openings.length)];
+  document.getElementById('c-opening').value = opening;
+}
+
+function getRandomName(gender) {
+  let pool = namePool.unisex;
+  if (gender === '男') {
+    pool = namePool.male;
+  } else if (gender === '女') {
+    pool = namePool.female;
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// 添加全局随机化按钮用于测试
+function randomizeAll() {
+  randomizeGender();
+  randomizeName();
+  randomizeAge();
+  randomizeJob();
+  randomizeAppearance();
+  randomizePersonality();
+  randomizeExtra();
+  randomizeDifficulty();
+  randomizeLocation();
+  randomizeOpening();
+  toast('已随机生成完整角色信息');
+}
+
+// 初始化
 loadApi();
 showScreen('screen-start');
+
+// 添加全局取消请求的功能
+window.addEventListener('beforeunload', function() {
+  if(currentRequestController){
+    currentRequestController.abort();
+  }
+});
+
+// 添加键盘快捷键
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape' && currentRequestController){
+    currentRequestController.abort();
+    toast('请求已取消');
+    setUIEnabled(true);
+  }
+});
+
+// 辅助函数，用于解析AI回复时获取状态信息
+function parseStateInfo(text) {
+  const stateMatch = text.match(/【状态】([^\n]+)/);
+  if (stateMatch) {
+    return stateMatch[1].split('|').reduce((acc, p) => {
+      const [k, v] = p.split('=').map(s => s.trim());
+      if (k && v) acc[k] = v;
+      return acc;
+    }, {});
+  }
+  return {};
+}
+
+// 添加消息函数（辅助）
+function addMessage(text, type = 'system') {
+  const area = document.getElementById('plot-area');
+  const oldText = area.textContent;
+  const prefix = type === 'system' ? '[系统] ' : '';
+  area.textContent = oldText + '\n\n' + prefix + text;
+  area.scrollTop = area.scrollHeight;
+}
 </script>
 </body>
 </html>
