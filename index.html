@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>露出系统</title>
+<style>
+:root{--bg:#f7f7f7;--card:#fff;--text:#222;--muted:#888;--border:#e0e0e0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.65;min-height:100vh;font-size:15px}
+.screen{display:none;min-height:100vh;padding:12px 14px 30px;max-width:640px;margin:0 auto}
+.screen.active{display:block}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px;font-size:14px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.top-bar .left,.top-bar .right{display:flex;gap:14px}
+.top-bar span{cursor:pointer;user-select:none}
+.top-bar span:active{opacity:.5}
+.time-loc{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:#444;padding-left:8px;border-left:3px solid #ccc}
+.time-loc .loc{text-align:right;max-width:40%;font-weight:500}
+.plot-area{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;min-height:280px;max-height:52vh;overflow-y:auto;white-space:pre-wrap;margin-bottom:16px;line-height:1.8;font-size:15px}
+.plot-area.streaming::after{content:"▋";animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0}}
+.choices{margin-bottom:12px}
+.choice-item{padding:10px 0;border-left:3px solid #ccc;padding-left:10px;margin-bottom:6px;cursor:pointer;font-size:15px}
+.choice-item:active{background:#f0f0f0}
+.input-box{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:15px;margin-bottom:10px;background:#fff;resize:none;min-height:44px}
+.btn{display:inline-block;padding:10px 18px;border:1px solid #333;border-radius:6px;background:#333;color:#fff;font-size:14px;cursor:pointer;margin-right:8px;margin-bottom:8px}
+.btn:active{opacity:.7}
+.btn-outline{background:#fff;color:#333}
+.btn-block{display:block;width:100%;text-align:center;margin-bottom:10px}
+.btn-regen{background:#fff;color:#c00;border-color:#c00}
+.panel-title{text-align:center;font-size:18px;font-weight:600;margin:10px 0 18px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#fff;border-radius:10px;padding:20px;width:90%;max-width:360px;max-height:80vh;overflow-y:auto}
+.modal h3{margin-bottom:14px;text-align:center}
+.save-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:6px;font-size:14px;z-index:200;max-width:85%;text-align:center}
+.hidden{display:none!important}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:15px}
+.start-title{text-align:center;font-size:28px;font-weight:700;margin:60px 0 10px;letter-spacing:2px}
+.start-sub{text-align:center;color:var(--muted);margin-bottom:50px;font-size:14px}
+.buy-btn{padding:4px 12px;border:1px solid #333;background:#fff;border-radius:4px;cursor:pointer;font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="screen-start" class="screen active">
+  <div class="start-title">露出系统</div>
+  <div class="start-sub">文字冒险 · 触屏操作</div>
+  <button class="btn btn-block" onclick="openSaveModal()">继续任务</button>
+  <button class="btn btn-block btn-outline" onclick="showScreen('screen-create')">重新开始</button>
+  <button class="btn btn-block btn-outline" onclick="showScreen('screen-settings')">API设置</button>
+</div>
+
+<div id="screen-create" class="screen">
+  <div class="panel-title">角色创建</div>
+  <div class="form-row"><label>性别</label><select id="c-gender"><option>男</option><option>女</option><option>其他</option></select></div>
+  <div class="form-row"><label>姓名</label><input id="c-name" type="text" placeholder="主角姓名"></div>
+  <div class="form-row"><label>年龄（≥18）</label><input id="c-age" type="number" min="18" max="60" value="22"></div>
+  <div class="form-row"><label>职业</label><input id="c-job" type="text" placeholder="大学生 / 白领 / 自由职业等"></div>
+  <div class="form-row"><label>外貌</label><textarea id="c-look" placeholder="身高体型、脸型发型、特殊特征..." style="min-height:70px"></textarea></div>
+  <div class="form-row"><label>性格</label><textarea id="c-pers" placeholder="表面冷静内心渴望刺激..." style="min-height:60px"></textarea></div>
+  <div class="form-row"><label>补充信息</label><textarea id="c-extra" placeholder="居住环境、人际关系、癖好等" style="min-height:60px"></textarea></div>
+  <div class="form-row"><label>难度</label>
+    <select id="c-diff"><option value="easy">简单</option><option value="normal" selected>普通</option><option value="hard">困难</option></select>
+  </div>
+  <div class="form-row"><label>初始地点</label>
+    <select id="c-loc">
+      <option value="寝室">寝室</option><option value="教室">教室</option><option value="图书馆">图书馆</option>
+      <option value="便利店">便利店</option><option value="公园">公园</option><option value="家中卧室">家中卧室</option>
+      <option value="custom">自定义...</option>
+    </select>
+  </div>
+  <div class="form-row hidden" id="custom-loc-row"><label>自定义地点</label><input id="c-loc-custom" type="text" placeholder="例如：公司办公室"></div>
+  <div class="form-row"><label>开场剧情提示（可选）</label><textarea id="c-opening" placeholder="例如：刚洗完澡只穿浴袍，系统突然激活..." style="min-height:60px"></textarea></div>
+  <button class="btn btn-block" onclick="startGame()">激活露出系统</button>
+  <button class="btn btn-outline btn-block" onclick="showScreen('screen-start')">返回</button>
+</div>
+
+<div id="screen-main" class="screen">
+  <div class="top-bar">
+    <div class="left"><span onclick="backToStart()">返回</span></div>
+    <div class="right">
+      <span onclick="quickSave()">保存</span>
+      <span onclick="openSaveModal()">存档</span>
+      <span onclick="showScreen('screen-settings')">API设置</span>
+    </div>
+  </div>
+  <div class="time-loc">
+    <div id="time-str">----年-月-日 周- --:--</div>
+    <div class="loc" id="loc-str">地点</div>
+  </div>
+  <div class="plot-area" id="plot-area">等待剧情生成...</div>
+  <div class="choices" id="choices-area"></div>
+  <textarea class="input-box" id="custom-input" placeholder="输入自定义剧情走向..."></textarea>
+  <button class="btn" onclick="submitCustom()">提交自定义</button>
+  <button class="btn btn-regen" onclick="regeneratePlot()">刷新剧情</button>
+</div>
+
+<div id="screen-settings" class="screen">
+  <div class="top-bar"><div class="left"><span onclick="showScreen(game.started?'screen-main':'screen-start')">返回</span></div></div>
+  <div class="panel-title">API 设置</div>
+  <div class="form-row"><label>API Base URL</label><input id="api-base" type="text" placeholder="https://api.openai.com/v1"></div>
+  <div class="form-row"><label>API Key</label><input id="api-key" type="password" placeholder="sk-..."></div>
+  <div class="form-row"><label>模型名称</label><input id="api-model" type="text" placeholder="gpt-4o-mini / deepseek-chat 等"></div>
+  <button class="btn btn-block" onclick="saveApi()">保存设置</button>
+</div>
+
+<div id="save-modal" class="modal-bg hidden">
+  <div class="modal">
+    <h3>存档管理</h3>
+    <div id="save-list"></div>
+    <button class="btn btn-block" style="margin-top:12px" onclick="createNewSave()">新建存档</button>
+    <button class="btn btn-outline btn-block" onclick="closeSaveModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+const game = {
+  started:false, day:1, timeStr:'', location:'寝室', level:1, exp:0, expMax:100,
+  currency:80, cash:0, stamina:100, pee:8, danger:3,
+  clothing:'家居服（宽松T恤+短裤）', specialStatus:'无', awareness:'周围暂无明显异常感知',
+  difficulty:'normal', char:{}, inventory:[], tasks:{main:null,side:[]}, npcs:[],
+  history:[], lastPlot:'', lastAction:'', openingHint:'', streaming:false
+};
+const MAX_HISTORY = 6;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function toast(msg, ms=2200){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function backToStart(){
+  if(game.started) quickSave();
+  showScreen('screen-start');
+}
+
+document.getElementById('c-loc').addEventListener('change', function(){
+  document.getElementById('custom-loc-row').classList.toggle('hidden', this.value !== 'custom');
+});
+
+function loadApi(){
+  const s = JSON.parse(localStorage.getItem('exp_api') || '{}');
+  document.getElementById('api-base').value = s.base || '';
+  document.getElementById('api-key').value = s.key || '';
+  document.getElementById('api-model').value = s.model || '';
+}
+function saveApi(){
+  localStorage.setItem('exp_api', JSON.stringify({
+    base: document.getElementById('api-base').value.trim(),
+    key: document.getElementById('api-key').value.trim(),
+    model: document.getElementById('api-model').value.trim()
+  }));
+  toast('API设置已保存');
+  showScreen(game.started ? 'screen-main' : 'screen-start');
+}
+function getApi(){ return JSON.parse(localStorage.getItem('exp_api') || '{}'); }
+
+function getSaveList(){ return JSON.parse(localStorage.getItem('exp_saves') || '[]'); }
+function setSaveList(list){ localStorage.setItem('exp_saves', JSON.stringify(list)); }
+
+function openSaveModal(){
+  const list = getSaveList();
+  const box = document.getElementById('save-list');
+  if(!list.length){
+    box.innerHTML = '<p style="color:#999;text-align:center">暂无存档</p>';
+  } else {
+    box.innerHTML = list.map((s,i) => `
+      <div class="save-item">
+        <div><div>${s.name}</div><div style="font-size:12px;color:#999">${s.time} · D${s.data.day} Lv.${s.data.level}</div></div>
+        <div>
+          <button class="buy-btn" onclick="loadSave(${i})">读取</button>
+          <button class="buy-btn" style="margin-left:6px;color:#c00" onclick="deleteSave(${i})">删除</button>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('save-modal').classList.remove('hidden');
+}
+function closeSaveModal(){ document.getElementById('save-modal').classList.add('hidden'); }
+
+function createNewSave(){
+  if(!game.started){ toast('请先开始游戏'); return; }
+  const name = prompt('存档名称', `第${game.day}天存档`);
+  if(!name) return;
+  const list = getSaveList();
+  list.unshift({ name, time: new Date().toLocaleString(), data: JSON.parse(JSON.stringify(game)) });
+  if(list.length > 8) list.pop();
+  setSaveList(list);
+  toast('存档已保存');
+  openSaveModal();
+}
+function loadSave(i){
+  const list = getSaveList();
+  if(!list[i]) return;
+  Object.assign(game, list[i].data);
+  game.started = true;
+  closeSaveModal();
+  showScreen('screen-main');
+  updateTime();
+  if(!game.lastPlot || !game.lastPlot.trim()){
+    document.getElementById('plot-area').textContent = '读档后剧情为空，请点击「刷新剧情」恢复。';
+    document.getElementById('choices-area').innerHTML = '';
+  } else {
+    document.getElementById('plot-area').textContent = game.lastPlot;
+    renderChoicesFromLast();
+  }
+  toast('存档已读取');
+}
+function deleteSave(i){
+  if(!confirm('确定删除此存档？')) return;
+  const list = getSaveList();
+  list.splice(i, 1);
+  setSaveList(list);
+  openSaveModal();
+  toast('已删除');
+}
+function quickSave(){
+  if(!game.started) return;
+  const list = getSaveList();
+  const auto = { name: '快速存档', time: new Date().toLocaleString(), data: JSON.parse(JSON.stringify(game)) };
+  const idx = list.findIndex(s => s.name === '快速存档');
+  if(idx >= 0) list[idx] = auto; else list.unshift(auto);
+  if(list.length > 8) list.pop();
+  setSaveList(list);
+}
+
+function initNpcs(){
+  const surnames = ['林','苏','陈','顾','沈','温','叶','夏','白','陆','江','许','贺','傅','裴'];
+  const givenM = ['清野','予安','景行','予舟','知许','景深','予白','清和','景明','予怀'];
+  const givenF = ['晚晴','知夏','清欢','予安','景惜','晚宁','清野','予怀','知予','景微'];
+  const relations = ['对门邻居','楼下便利店店员','同楼住户','偶尔碰面的同事','公司前辈','社团学长/学姐','健身房常客','咖啡店店员','快递站工作人员','小区保安'];
+  const looksM = ['短发干净利落，戴细框眼镜，气质清冷','身高偏高，笑容温和，穿着整洁','微卷头发，眼神锐利，常穿深色衣服','斯文白净，说话轻声，显得礼貌','运动型身材，皮肤微晒，活力十足'];
+  const looksF = ['短发戴细框眼镜，气质清冷','长直发，皮肤白皙，常穿宽松衣服','微卷长发，笑容甜美，妆容淡雅','高马尾，眼神明亮，穿着干练','空气刘海，声音轻柔，气质温柔'];
+  const personalities = ['表面冷淡，观察力极强','热情但不越界，喜欢聊天','活泼爱八卦，好奇心重','沉默寡言，但记性很好','温和有礼，容易心软','直率敢言，对反常行为敏感','慢热型，熟悉后会很照顾人'];
+  game.npcs = [];
+  for(let i=0; i<3; i++){
+    const gender = Math.random() > 0.45 ? '女' : '男';
+    game.npcs.push({
+      id: 'n'+(i+1),
+      name: rand(surnames) + (gender==='女' ? rand(givenF) : rand(givenM)),
+      gender, age: randInt(20,32),
+      relation: rand(relations),
+      look: gender==='女' ? rand(looksF) : rand(looksM),
+      personality: rand(personalities), alert: 0
+    });
+  }
+}
+
+function genDailyTasks(){
+  const pools = {
+    easy: [
+      {title:'在家中阳台或窗边短暂露出10-20秒', reward:25, exp:15, punish:'危险值+8，体力-10'},
+      {title:'换衣时故意让窗帘留一条缝隙', reward:30, exp:18, punish:'危险值+10，可能被对面隐约看到'},
+      {title:'在家门口走廊快速露出后立刻返回', reward:35, exp:20, punish:'危险值+12，体力-12'}
+    ],
+    normal: [
+      {title:'去便利店购物时故意不穿内裤', reward:55, exp:30, punish:'危险值+20，若被店员发现异常感知大幅上升'},
+      {title:'在电梯内短暂调整衣物造成走光', reward:65, exp:35, punish:'危险值+22，可能被同乘者察觉'},
+      {title:'公共厕所隔间故意发出细微声响后离开', reward:50, exp:28, punish:'危险值+18'},
+      {title:'穿轻微透光材质衣服在小区内行走10分钟', reward:70, exp:38, punish:'危险值+25'}
+    ],
+    hard: [
+      {title:'在人流不多的街道短暂掀起下装', reward:95, exp:50, punish:'危险值+35，极易触发NPC警觉或意外'},
+      {title:'深夜到楼道尽头露出并拍照存档', reward:110, exp:55, punish:'危险值+40，失败可能触发抽象风险提示'},
+      {title:'在公交/地铁上故意让衣物短暂走光一次', reward:100, exp:52, punish:'危险值+38，周围人异常感知显著提升'}
+    ],
+    extreme: [
+      {title:'在商场试衣间外短暂露出后迅速进入', reward:140, exp:70, punish:'危险值+50，高概率触发严重后果提示'},
+      {title:'完成一次完全无遮挡的公共区域短时露出', reward:160, exp:80, punish:'危险值+55，极可能触发非自愿风险或报警抽象后果'}
+    ]
+  };
+  const progress = game.day + game.level - 1;
+  let available = ['easy'];
+  if(progress >= 3) available.push('normal');
+  if(progress >= 6) available.push('hard');
+  if(progress >= 10) available.push('extreme');
+
+  game.tasks.main = {...rand(pools[available[available.length-1]]), completed:false};
+  let candidates = [];
+  available.forEach(d => candidates = candidates.concat(pools[d]));
+  candidates = candidates.sort(() => Math.random() - 0.5);
+  const selected = [], used = new Set([game.tasks.main.title]);
+  for(const t of candidates){
+    if(selected.length >= 3) break;
+    if(!used.has(t.title)){ selected.push({...t, completed:false}); used.add(t.title); }
+  }
+  game.tasks.side = selected;
+}
+
+function updateTime(){
+  const d = new Date();
+  d.setDate(d.getDate() + game.day - 1);
+  const week = ['日','一','二','三','四','五','六'][d.getDay()];
+  const h = 8 + Math.floor(Math.random()*10);
+  const m = Math.floor(Math.random()*60).toString().padStart(2,'0');
+  game.timeStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 周${week} ${h}:${m}`;
+  document.getElementById('time-str').textContent = game.timeStr;
+  document.getElementById('loc-str').textContent = game.location;
+}
+
+function buildSystemPrompt(){
+  return `你是「露出系统」文字游戏的专业剧情生成器。必须严格遵守：
+1. 所有角色均为18岁以上成年人，禁止未成年描写。
+2. 文风色情露骨、细腻小说体，详细描写行为、神态、心理、身体感受、NPC反应与对话。句子必须完整通顺，严禁吞字、漏字、截断。
+3. 非自愿行为仅作抽象风险提示，绝不详细描写非自愿性行为。
+4. 严格承接上一轮所有细节。
+5. 增加剧情分支感、多角色互动（至少两名NPC）、任务提示清晰醒目。
+6. 输出格式必须完整且顺序固定：
+完整小说剧情（900-1600字，句子完整无截断）
+——状态总结——
+等级：Lv.x（经验 x/x）
+系统余额：x　现金：x
+体力：x　尿意：x　危险值：x
+衣物：xxx
+特殊状态：xxx
+异常感知：xxx
+主线任务：xxx（已完成/未完成）
+支线1：xxx（已完成/未完成）
+支线2：xxx（已完成/未完成）
+支线3：xxx（已完成/未完成）
+背包：xxx
+——选项——
+【选项1】具体行动（与其他选项明显不同）
+【选项2】具体行动（与其他选项明显不同）
+【选项3】具体行动（与其他选项明显不同）
+【状态】地点=xxx|衣物=xxx|特殊状态=xxx|异常感知=xxx|体力变化=±n|尿意变化=±n|危险变化=±n|主线完成=是/否|支线完成=1,2或无`;
+}
+
+function buildUserPrompt(action){
+  const c = game.char;
+  const npcStr = game.npcs.map(n => `${n.name}(${n.relation},${n.look},性格${n.personality},警觉${n.alert})`).join('；');
+  const sideStr = game.tasks.side.map((s,i) => `支线${i+1}：${s.title}${s.completed?'(已完成)':'(未完成)'}`).join('；');
+  return `【当前完整状态】
+主角：${c.name}，${c.gender}，${c.age}岁，职业${c.job}
+外貌：${c.look} 性格：${c.personality} 补充：${c.extra}
+难度：${game.difficulty} 第${game.day}天 ${game.timeStr} 地点：${game.location}
+等级Lv.${game.level} 经验${game.exp}/${game.expMax} 余额${game.currency} 现金${game.cash}
+体力${game.stamina} 尿意${game.pee} 危险${game.danger}
+衣物：${game.clothing} 特殊状态：${game.specialStatus} 异常感知：${game.awareness}
+主线：${game.tasks.main ? game.tasks.main.title+(game.tasks.main.completed?'(已完成)':'(未完成)') : '无'}
+支线：${sideStr}
+NPC：${npcStr}
+背包：${game.inventory.filter(i=>!i.used).map(i=>i.name).join('、')||'空'}
+
+【玩家本轮行动】${action}
+
+请严格承接信息，生成连贯完整剧情（句子不得截断或吞字），包含多角色互动与清晰任务提示，并按格式输出状态总结 + 三个完全不重复的选项 + 状态行。`;
+}
+
+async function callStream(system, user){
+  const cfg = getApi();
+  if(!cfg.base || !cfg.key || !cfg.model){ toast('请先配置API'); return null; }
+  const messages = [{role:'system', content:system}];
+  game.history.slice(-MAX_HISTORY).forEach(h => {
+    messages.push({role:'user', content:h.user});
+    messages.push({role:'assistant', content:h.assistant});
+  });
+  messages.push({role:'user', content:user});
+  try{
+    const res = await fetch(cfg.base.replace(/\/$/,'') + '/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + cfg.key},
+      body: JSON.stringify({model:cfg.model, stream:true, temperature:0.82, max_tokens:2800, messages})
+    });
+    if(!res.ok){ toast('API错误 ' + res.status); return null; }
+    return res.body.getReader();
+  }catch(e){ toast('网络连接失败'); return null; }
+}
+
+async function streamPlot(reader){
+  const el = document.getElementById('plot-area');
+  el.classList.add('streaming');
+  el.textContent = '';
+  let full = '';
+  let buffer = '';
+  const decoder = new TextDecoder();
+  try{
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // 保留不完整行
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if(data === '[DONE]') continue;
+        try{
+          const delta = JSON.parse(data).choices?.[0]?.delta?.content || '';
+          if(delta){
+            full += delta;
+            // 只过滤状态行，正文完整显示
+            el.textContent = full.replace(/【状态】[^\n]*/g, '').trim();
+            el.scrollTop = el.scrollHeight;
+          }
+        }catch{}
+      }
+    }
+    // 处理最后剩余缓冲
+    if(buffer.startsWith('data: ')){
+      try{
+        const data = buffer.slice(6).trim();
+        if(data !== '[DONE]'){
+          const delta = JSON.parse(data).choices?.[0]?.delta?.content || '';
+          if(delta) full += delta;
+        }
+      }catch{}
+    }
+  } finally {
+    el.classList.remove('streaming');
+    el.textContent = full.replace(/【状态】[^\n]*/g, '').trim();
+  }
+  return full;
+}
+
+function parseAndUpdate(full){
+  // 提取选项并去重
+  let choices = [];
+  const reList = [
+    /【选项\s*(\d)\s*】\s*([^\n【]+)/g,
+    /选项\s*(\d)\s*[:：]\s*([^\n]+)/g
+  ];
+  for(const re of reList){
+    let m;
+    while((m = re.exec(full)) !== null){
+      const t = m[2].trim();
+      if(t && !choices.some(c => c.slice(0,10) === t.slice(0,10))) choices.push(t);
+    }
+    if(choices.length >= 3) break;
+  }
+  choices = choices.slice(0,3);
+  const fallbacks = ['大胆推进当前主线任务','谨慎观察周围NPC反应并调整策略','先处理身体状态或与在场NPC简短互动'];
+  while(choices.length < 3){
+    const fb = fallbacks[choices.length];
+    if(!choices.includes(fb)) choices.push(fb); else break;
+  }
+
+  // 解析状态
+  const stateMatch = full.match(/【状态】([^\n]+)/);
+  if(stateMatch){
+    stateMatch[1].split('|').forEach(p => {
+      const [k, v] = (p.split('=') || []).map(s => s && s.trim());
+      if(!k || !v) return;
+      if(k === '地点') game.location = v;
+      if(k === '衣物') game.clothing = v;
+      if(k === '特殊状态') game.specialStatus = v;
+      if(k === '异常感知') game.awareness = v;
+      if(k === '体力变化') game.stamina = Math.max(0, Math.min(100, game.stamina + (parseInt(v)||0)));
+      if(k === '尿意变化') game.pee = Math.max(0, Math.min(100, game.pee + (parseInt(v)||0)));
+      if(k === '危险变化') game.danger = Math.max(0, Math.min(100, game.danger + (parseInt(v)||0)));
+      if(k === '主线完成' && v === '是' && game.tasks.main && !game.tasks.main.completed){
+        game.tasks.main.completed = true;
+        game.currency += game.tasks.main.reward;
+        game.exp += game.tasks.main.exp || 30;
+        toast(`主线完成！+${game.tasks.main.reward}币 +${game.tasks.main.exp||30}经验`);
+      }
+      if(k === '支线完成' && v !== '无'){
+        v.split(/[,，]/).forEach(num => {
+          const i = parseInt(num) - 1;
+          if(game.tasks.side[i] && !game.tasks.side[i].completed){
+            game.tasks.side[i].completed = true;
+            game.currency += game.tasks.side[i].reward;
+            game.exp += game.tasks.side[i].exp || 15;
+            toast(`支线${num}完成！+${game.tasks.side[i].reward}币 +${game.tasks.side[i].exp||15}经验`);
+          }
+        });
+      }
+    });
+  }
+
+  // 全部完成则进入下一天
+  if(game.tasks.main?.completed && game.tasks.side.every(s => s.completed)){
+    game.day++;
+    game.stamina = Math.min(100, game.stamina + 30);
+    game.pee = Math.max(0, game.pee - 20);
+    genDailyTasks();
+    toast(`第${game.day}天开始！新任务已刷新`);
+  }
+
+  while(game.exp >= game.expMax){
+    game.exp -= game.expMax;
+    game.level++;
+    game.expMax = 100 + (game.level - 1) * 50;
+    game.currency += 60;
+    toast(`升级至 Lv.${game.level}！`);
+  }
+  if(game.pee >= 85) toast('尿意极高，有失禁风险！');
+  if(game.stamina <= 15) toast('体力不支，可能晕厥！');
+  if(game.danger >= 70) toast('危险值过高，极易发生意外！');
+
+  game.lastPlot = full.replace(/【状态】[^\n]*/g, '').trim();
+  updateTime();
+  quickSave();
+  return choices;
+}
+
+function renderChoices(choices){
+  document.getElementById('choices-area').innerHTML = choices.map((c,i) =>
+    `<div class="choice-item" onclick="doChoice(\`${c.replace(/`/g,'\\`')}\`)">选择${i+1}：${c}</div>`
+  ).join('');
+}
+function renderChoicesFromLast(){
+  document.getElementById('choices-area').innerHTML = `
+    <div class="choice-item" onclick="regeneratePlot()">刷新当前剧情</div>
+    <div class="choice-item" onclick="doChoice('继续当前剧情')">继续当前剧情</div>`;
+}
+
+async function generateOpening(){
+  if(game.streaming) return;
+  game.streaming = true;
+  let action = '系统刚刚在主角眼前激活，请生成完整开场剧情：系统说明规则、清晰发布第一天主线与支线任务、主角的第一反应与身体心理描写。要求出现至少两名NPC的互动或存在感。句子必须完整，不得吞字漏字。';
+  if(game.openingHint) action += ' 开场额外提示：' + game.openingHint;
+  game.lastAction = action;
+  document.getElementById('choices-area').innerHTML = '';
+  const user = buildUserPrompt(action);
+  const reader = await callStream(buildSystemPrompt(), user);
+  if(!reader){ game.streaming = false; return; }
+  const full = await streamPlot(reader);
+  const choices = parseAndUpdate(full);
+  game.history.push({user, assistant:full});
+  if(game.history.length > MAX_HISTORY) game.history.shift();
+  renderChoices(choices);
+  game.streaming = false;
+}
+
+async function doChoice(action){
+  if(game.streaming) return;
+  game.streaming = true;
+  game.lastAction = action;
+  document.getElementById('choices-area').innerHTML = '';
+  document.getElementById('custom-input').value = '';
+  game.stamina = Math.max(0, game.stamina - 4 - Math.floor(Math.random()*6));
+  game.pee = Math.min(100, game.pee + 3 + Math.floor(Math.random()*5));
+  const user = buildUserPrompt(action);
+  const reader = await callStream(buildSystemPrompt(), user);
+  if(!reader){ game.streaming = false; return; }
+  const full = await streamPlot(reader);
+  const choices = parseAndUpdate(full);
+  game.history.push({user, assistant:full});
+  if(game.history.length > MAX_HISTORY) game.history.shift();
+  renderChoices(choices);
+  game.streaming = false;
+}
+
+function submitCustom(){
+  const v = document.getElementById('custom-input').value.trim();
+  if(!v){ toast('请输入内容'); return; }
+  doChoice(v);
+}
+
+async function regeneratePlot(){
+  if(game.streaming) return;
+  if(!game.lastAction){ await generateOpening(); return; }
+  toast('正在刷新剧情...');
+  game.streaming = true;
+  document.getElementById('choices-area').innerHTML = '';
+  const user = buildUserPrompt(game.lastAction + '（请重新生成完整剧情，句子完整无吞字漏字，必须输出完整状态总结 + 三个完全不重复的选项）');
+  const reader = await callStream(buildSystemPrompt(), user);
+  if(!reader){ game.streaming = false; return; }
+  const full = await streamPlot(reader);
+  const choices = parseAndUpdate(full);
+  if(game.history.length > 0) game.history[game.history.length-1] = {user, assistant:full};
+  else game.history.push({user, assistant:full});
+  renderChoices(choices);
+  game.streaming = false;
+}
+
+function startGame(){
+  const age = parseInt(document.getElementById('c-age').value);
+  if(isNaN(age) || age < 18){ toast('年龄必须≥18'); return; }
+  const name = document.getElementById('c-name').value.trim() || '主角';
+  let loc = document.getElementById('c-loc').value;
+  if(loc === 'custom') loc = document.getElementById('c-loc-custom').value.trim() || '寝室';
+  game.char = {
+    name,
+    gender: document.getElementById('c-gender').value,
+    age,
+    job: document.getElementById('c-job').value.trim() || '自由职业者',
+    look: document.getElementById('c-look').value.trim() || '普通外貌',
+    personality: document.getElementById('c-pers').value.trim() || '内向但渴望刺激',
+    extra: document.getElementById('c-extra').value.trim() || ''
+  };
+  game.difficulty = document.getElementById('c-diff').value;
+  game.location = loc;
+  game.openingHint = document.getElementById('c-opening').value.trim();
+  game.started = true;
+  game.day = 1; game.level = 1; game.exp = 0; game.expMax = 100;
+  game.currency = 80; game.cash = 0; game.stamina = 100; game.pee = 8; game.danger = 3;
+  game.clothing = '家居服（宽松T恤+短裤）';
+  game.specialStatus = '无';
+  game.awareness = '周围暂无明显异常感知';
+  game.inventory = []; game.history = []; game.lastPlot = ''; game.lastAction = '';
+  initNpcs();
+  genDailyTasks();
+  updateTime();
+  showScreen('screen-main');
+  generateOpening();
+}
+
+loadApi();
+showScreen('screen-start');
+</script>
+</body>
+</html>
